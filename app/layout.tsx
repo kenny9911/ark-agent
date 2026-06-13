@@ -55,9 +55,20 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${spaceGrotesk.variable} ${instrumentSans.variable} ${ibmPlexMono.variable} ${newsreader.variable}`}
     >
       <body>
+        {/* Apply the saved theme before first paint to avoid a flash. Runs as
+            the first thing in <body>, so data-theme is set before the page
+            content lays out. Defaults to the SSR value ("dark"). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var t=localStorage.getItem('ark-theme');if(t==='light'||t==='dark'){document.documentElement.setAttribute('data-theme',t);}}catch(e){}})();",
+          }}
+        />
         <AppProvider>
           {children}
           <DemoPill />

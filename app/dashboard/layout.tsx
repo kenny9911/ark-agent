@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { c, font, r } from "@/lib/theme";
 import { Btn } from "@/components/ui";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navDefs = [
   { id: "overview", label: "Overview", icon: "◫", href: "/dashboard" },
@@ -77,7 +78,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               placeItems: "center",
               fontFamily: font.space,
               fontWeight: 700,
-              color: c.bg,
+              color: c.ink,
               fontSize: 14,
             }}
           >
@@ -136,7 +137,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   style={{
                     fontFamily: font.mono,
                     fontSize: 12,
-                    color: on ? c.lime : c.faint,
+                    color: on ? c.accent : c.faint,
                   }}
                 >
                   {n.icon}
@@ -149,12 +150,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
         <Btn
           onClick={() => go("/hire")}
-          hoverStyle={{ borderColor: c.lime }}
+          hoverStyle={{ borderColor: c.accent }}
           style={{
             margin: "8px 12px",
             border: `1px dashed ${c.borderStrong}`,
             background: "transparent",
-            color: c.lime,
+            color: c.accent,
             padding: 11,
             fontFamily: font.space,
             fontWeight: 500,
@@ -208,6 +209,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               W
             </div>
             <div style={{ fontSize: 13, color: c.text2 }}>Wei Zhang</div>
+            <ThemeToggle style={{ marginLeft: "auto" }} />
           </div>
         </div>
       </div>
@@ -257,7 +259,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 placeItems: "center",
                 fontFamily: font.space,
                 fontWeight: 700,
-                color: c.bg,
+                color: c.ink,
                 fontSize: 13,
               }}
             >
@@ -285,6 +287,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           >
             18,420 / 30k
           </span>
+          <ThemeToggle />
         </div>
         {children}
       </div>

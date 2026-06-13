@@ -78,7 +78,7 @@ function FleetCard({ a }: { a: Agent }) {
             e.stopPropagation();
             router.push(`/dashboard/fleet/${a.id}?tab=settings`);
           }}
-          hoverStyle={{ borderColor: c.lime, color: c.lime }}
+          hoverStyle={{ borderColor: c.accent, color: c.accent }}
           style={{
             flex: 1,
             border: `1px solid ${c.borderStrong}`,

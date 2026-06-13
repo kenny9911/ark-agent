@@ -55,7 +55,7 @@ export function DemoPill() {
         zIndex: 99,
         display: "flex",
         gap: 2,
-        background: "rgba(14,17,22,.92)",
+        background: c.glass,
         backdropFilter: "blur(10px)",
         WebkitBackdropFilter: "blur(10px)",
         border: `1px solid ${c.borderStrong}`,
@@ -77,7 +77,7 @@ export function DemoPill() {
             href={p.href}
             style={{
               background: on ? c.lime : "transparent",
-              color: on ? c.bg : c.muted,
+              color: on ? c.ink : c.muted,
               border: "none",
               padding: r.pillPad,
               fontFamily: font.mono,

@@ -131,7 +131,7 @@ export default function OverviewPage() {
                     width: 38,
                     height: 38,
                     background: a.hue,
-                    color: c.bg,
+                    color: c.ink,
                     display: "grid",
                     placeItems: "center",
                     fontFamily: font.space,

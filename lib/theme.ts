@@ -9,49 +9,52 @@ import type { CSSProperties } from "react";
 
 export const c = {
   // surfaces
-  bg: "#0B0D10", // page background / text-on-lime ink
-  panel: "#0E1116", // raised panel
-  panelDeep: "#0B0D10", // recessed input wells inside panels
-  hover: "#12161D", // card hover background
+  bg: "var(--c-bg)", // page background / text-on-lime ink
+  panel: "var(--c-panel)", // raised panel
+  panelDeep: "var(--c-panel-deep)", // recessed input wells inside panels
+  hover: "var(--c-hover)", // card hover background
+  glass: "var(--c-glass)", // translucent nav / drawer / pill background
 
   // hairlines / borders
-  line: "#1B212C", // structural hairline (grid gaps, dividers)
-  lineSoft: "#161B23", // faint row divider in lists/feeds
-  border: "#232B38", // default control/card border
-  borderStrong: "#2A3342", // secondary button / stronger border
-  borderMute: "#3A4452", // hover border for muted controls
+  line: "var(--c-line)", // structural hairline (grid gaps, dividers)
+  lineSoft: "var(--c-line-soft)", // faint row divider in lists/feeds
+  border: "var(--c-border)", // default control/card border
+  borderStrong: "var(--c-border-strong)", // secondary button / stronger border
+  borderMute: "var(--c-border-mute)", // hover border for muted controls
 
   // lime accent
-  lime: "#D8FF3E",
-  limeHover: "#E9FF7A",
-  limeWash: "#11150C", // selected/active lime-tinted background
-  limeWash2: "#161B0F", // hover over a lime-tinted card
-  limeBorder: "#3A4520", // border around lime-tinted surfaces
+  lime: "var(--c-lime)", // bright lime FILL (use dark `ink` for text on it)
+  limeHover: "var(--c-lime-hover)",
+  accent: "var(--c-accent)", // lime as TEXT/icon/thin line (darkens in light mode)
+  limeWash: "var(--c-lime-wash)", // selected/active lime-tinted background
+  limeWash2: "var(--c-lime-wash2)", // hover over a lime-tinted card
+  limeBorder: "var(--c-lime-border)", // border around lime-tinted surfaces
 
   // text ramp
-  ink: "#0B0D10", // text/icon on a lime fill
-  text: "#E8ECF1",
-  text2: "#C6CEDA",
-  muted: "#9AA3B2",
-  faint: "#525B6B",
+  ink: "var(--c-ink)", // text/icon on a lime fill
+  text: "var(--c-text)",
+  text2: "var(--c-text2)",
+  muted: "var(--c-muted)",
+  faint: "var(--c-faint)",
 
   // status
-  green: "#4ADE80",
-  greenWash: "#0F1A14",
-  greenBorder: "#1E3A2A",
-  amber: "#FBBF24",
-  red: "#F87171",
-  redWash: "#1A0F11",
-  redBorder: "#3A2328",
-  blue: "#6AA6FF",
+  green: "var(--c-green)",
+  greenWash: "var(--c-green-wash)",
+  greenBorder: "var(--c-green-border)",
+  amber: "var(--c-amber)",
+  red: "var(--c-red)",
+  redWash: "var(--c-red-wash)",
+  redBorder: "var(--c-red-border)",
+  blue: "var(--c-blue)",
 
   // brand / third-party
-  stripe: "#635BFF",
-  stripeHover: "#7A73FF",
-  alipay: "#1677FF",
-  navSelected: "#1A202B", // selected sidebar nav row
+  stripe: "var(--c-stripe)",
+  stripeHover: "var(--c-stripe-hover)",
+  alipay: "var(--c-alipay)",
+  navSelected: "var(--c-nav-selected)", // selected sidebar nav row
 
-  // directions screen (light theme sketches)
+  // directions screen — fixed palette sketches (NOT theme-switched; these
+  // illustrate three distinct design directions and keep their own colors).
   dirBg: "#E9EAEC",
   dirInk: "#1A1D22",
   dirMuted: "#6B7280",
@@ -84,10 +87,11 @@ export const font = {
   serif: "var(--font-serif), 'Newsreader', serif",
 } as const;
 
-/** The faint 52px engineering grid used on the hero and the auth panel. */
+/** The faint 52px engineering grid used on the hero and the auth panel.
+ *  Line color is themed via --c-grid (faint white on dark, faint ink on light). */
 export const gridBg = {
   backgroundImage:
-    "linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px)",
+    "linear-gradient(var(--c-grid) 1px, transparent 1px), linear-gradient(90deg, var(--c-grid) 1px, transparent 1px)",
   backgroundSize: "52px 52px",
 } as const;
 

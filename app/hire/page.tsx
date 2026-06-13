@@ -9,6 +9,7 @@ import { Btn } from "@/components/ui";
 import type { Agent } from "@/lib/types";
 
 const LIME = c.lime;
+const ACCENT = c.accent;
 const INKBG = c.panel; // #0E1116
 const BORD = c.border; // #232B38
 
@@ -129,7 +130,7 @@ function HireInner() {
       hue: selRoleObj.hue,
       mono: revName[0].toUpperCase(),
       st: "ONBOARDING",
-      sc: LIME,
+      sc: ACCENT,
       vm: "sgp-07",
       up: "0d 0h",
       credits: "0",
@@ -140,14 +141,14 @@ function HireInner() {
           t: "JUST NOW",
           txt: "Started first task: " + (tasks[0] || "reviewing the job brief"),
           tag: "STARTED",
-          tagC: LIME,
+          tagC: ACCENT,
         },
       ],
       tasks: tasks.map((txt, i) => ({
         txt,
         sym: i === 0 ? "◌" : "·",
-        c: i === 0 ? LIME : "#525B6B",
-        tc: i === 0 ? "#E8ECF1" : "#9AA3B2",
+        c: i === 0 ? ACCENT : c.faint,
+        tc: i === 0 ? c.text : c.muted,
         meta: i === 0 ? "IN PROGRESS" : "QUEUED",
       })),
       perfNote: "First self-review will run after one week of activity.",
@@ -182,8 +183,8 @@ function HireInner() {
 
   // ----- engine cards -----
   const mkEc = (id: string) => ({
-    bc: engine === id ? LIME : BORD,
-    bg: engine === id ? "#11150C" : INKBG,
+    bc: engine === id ? ACCENT : BORD,
+    bg: engine === id ? c.limeWash : INKBG,
     dot: engine === id ? LIME : "transparent",
     pick: () => setEngine(id),
   });
@@ -203,8 +204,8 @@ function HireInner() {
     return {
       label,
       sym: done ? "✓" : active ? "◌" : "·",
-      c: done ? c.green : active ? LIME : "#525B6B",
-      tc: done ? c.muted : active ? "#E8ECF1" : "#525B6B",
+      c: done ? c.green : active ? ACCENT : c.faint,
+      tc: done ? c.muted : active ? c.text : c.faint,
       op: done || active ? 1 : 0.55,
       anim: active ? "spin 1s linear infinite" : "none",
     };
@@ -216,7 +217,7 @@ function HireInner() {
       <div
         style={{
           height: 60,
-          borderBottom: "1px solid #1B212C",
+          borderBottom: `1px solid ${c.line}`,
           display: "flex",
           alignItems: "center",
           padding: `0 ${r.pagePx}`,
@@ -228,13 +229,13 @@ function HireInner() {
           style={{
             background: "none",
             border: "none",
-            color: "#9AA3B2",
+            color: c.muted,
             fontSize: 14,
             cursor: "pointer",
             fontFamily: font.sans,
             padding: 0,
           }}
-          hoverStyle={{ color: "#E8ECF1" }}
+          hoverStyle={{ color: c.text }}
         >
           ← ArkAgent
         </Btn>
@@ -243,7 +244,7 @@ function HireInner() {
             fontFamily: font.mono,
             fontSize: 12,
             letterSpacing: ".14em",
-            color: "#D8FF3E",
+            color: c.accent,
           }}
         >
           NEW HIRE
@@ -253,7 +254,7 @@ function HireInner() {
             marginLeft: "auto",
             fontFamily: font.mono,
             fontSize: 12,
-            color: "#525B6B",
+            color: c.faint,
           }}
         >
           STEP {hireStep} / 4
@@ -273,7 +274,7 @@ function HireInner() {
         {/* Stepper rail */}
         <div
           style={{
-            borderRight: "1px solid #1B212C",
+            borderRight: `1px solid ${c.line}`,
             padding: `48px ${r.pagePx} 48px ${r.pagePxWide}`,
             display: "flex",
             flexDirection: "column",
@@ -282,9 +283,9 @@ function HireInner() {
         >
           {stepDefs.map((d, i) => {
             const numC =
-              i + 1 === hireStep ? LIME : i + 1 < hireStep ? c.green : "#525B6B";
+              i + 1 === hireStep ? ACCENT : i + 1 < hireStep ? c.green : c.faint;
             const labelC =
-              i + 1 === hireStep ? "#E8ECF1" : i + 1 < hireStep ? "#9AA3B2" : "#525B6B";
+              i + 1 === hireStep ? c.text : i + 1 < hireStep ? c.muted : c.faint;
             return (
               <div key={d.num} style={{ display: "flex", gap: 16, alignItems: "baseline" }}>
                 <span style={{ fontFamily: font.mono, fontSize: 13, color: numC }}>
@@ -301,7 +302,7 @@ function HireInner() {
                   >
                     {d.label}
                   </div>
-                  <div style={{ fontSize: 12.5, color: "#525B6B", marginTop: 2 }}>
+                  <div style={{ fontSize: 12.5, color: c.faint, marginTop: 2 }}>
                     {d.sub}
                   </div>
                 </div>
@@ -311,17 +312,17 @@ function HireInner() {
           <div
             style={{
               marginTop: "auto",
-              border: "1px solid #232B38",
+              border: `1px solid ${c.border}`,
               padding: 16,
               fontSize: 13,
-              color: "#9AA3B2",
+              color: c.muted,
             }}
           >
             <div
               style={{
                 fontFamily: font.mono,
                 fontSize: 11,
-                color: "#D8FF3E",
+                color: c.accent,
                 letterSpacing: ".1em",
                 marginBottom: 8,
               }}
@@ -349,7 +350,7 @@ function HireInner() {
               >
                 Choose the role
               </h2>
-              <p style={{ color: "#9AA3B2", margin: "0 0 32px" }}>
+              <p style={{ color: c.muted, margin: "0 0 32px" }}>
                 Pick a ready-made role, or describe your own from scratch.
               </p>
               <div
@@ -366,8 +367,8 @@ function HireInner() {
                       key={r.id}
                       onClick={() => setSelRole(r.id)}
                       style={{
-                        border: "1px solid " + (sel ? LIME : BORD),
-                        background: sel ? "#11150C" : INKBG,
+                        border: "1px solid " + (sel ? ACCENT : BORD),
+                        background: sel ? c.limeWash : INKBG,
                         padding: "18px 20px",
                         cursor: "pointer",
                         display: "flex",
@@ -381,7 +382,7 @@ function HireInner() {
                           height: 34,
                           flexShrink: 0,
                           background: r.hue,
-                          color: "#0B0D10",
+                          color: c.ink,
                           display: "grid",
                           placeItems: "center",
                           fontFamily: font.space,
@@ -400,7 +401,7 @@ function HireInner() {
                         >
                           {r.name}
                         </div>
-                        <div style={{ fontSize: 12.5, color: "#9AA3B2" }}>{r.blurb}</div>
+                        <div style={{ fontSize: 12.5, color: c.muted }}>{r.blurb}</div>
                       </div>
                     </div>
                   );
@@ -423,8 +424,8 @@ function HireInner() {
               >
                 Write the job brief
               </h2>
-              <p style={{ color: "#9AA3B2", margin: "0 0 32px" }}>
-                Hiring: <span style={{ color: "#D8FF3E" }}>{selRoleObj.name}</span> — plain
+              <p style={{ color: c.muted, margin: "0 0 32px" }}>
+                Hiring: <span style={{ color: c.accent }}>{selRoleObj.name}</span> — plain
                 language is all it needs.
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
@@ -434,7 +435,7 @@ function HireInner() {
                       fontFamily: font.mono,
                       fontSize: 11,
                       letterSpacing: ".12em",
-                      color: "#9AA3B2",
+                      color: c.muted,
                       marginBottom: 8,
                     }}
                   >
@@ -447,9 +448,9 @@ function HireInner() {
                     style={{
                       width: "100%",
                       maxWidth: 280,
-                      background: "#0E1116",
-                      border: "1px solid #232B38",
-                      color: "#E8ECF1",
+                      background: c.panel,
+                      border: `1px solid ${c.border}`,
+                      color: c.text,
                       padding: "12px 14px",
                       fontSize: 15,
                       fontFamily: font.sans,
@@ -471,7 +472,7 @@ function HireInner() {
                         fontFamily: font.mono,
                         fontSize: 11,
                         letterSpacing: ".12em",
-                        color: "#9AA3B2",
+                        color: c.muted,
                       }}
                     >
                       INSTRUCTIONS
@@ -480,15 +481,15 @@ function HireInner() {
                       onClick={genInstr}
                       style={{
                         background: "none",
-                        border: "1px solid #3A4520",
-                        color: "#D8FF3E",
+                        border: `1px solid ${c.limeBorder}`,
+                        color: c.accent,
                         fontFamily: font.mono,
                         fontSize: 11,
                         letterSpacing: ".06em",
                         padding: "5px 10px",
                         cursor: "pointer",
                       }}
-                      hoverStyle={{ background: "#11150C" }}
+                      hoverStyle={{ background: c.limeWash }}
                     >
                       {genBusyI ? "✦ GENERATING…" : "✦ AUTO-GENERATE"}
                     </Btn>
@@ -500,9 +501,9 @@ function HireInner() {
                     style={{
                       width: "100%",
                       minHeight: 110,
-                      background: "#0E1116",
-                      border: "1px solid #232B38",
-                      color: "#E8ECF1",
+                      background: c.panel,
+                      border: `1px solid ${c.border}`,
+                      color: c.text,
                       padding: "12px 14px",
                       fontSize: 15,
                       fontFamily: font.sans,
@@ -525,7 +526,7 @@ function HireInner() {
                         fontFamily: font.mono,
                         fontSize: 11,
                         letterSpacing: ".12em",
-                        color: "#9AA3B2",
+                        color: c.muted,
                       }}
                     >
                       RULES &amp; BOUNDARIES
@@ -534,15 +535,15 @@ function HireInner() {
                       onClick={genRules}
                       style={{
                         background: "none",
-                        border: "1px solid #3A4520",
-                        color: "#D8FF3E",
+                        border: `1px solid ${c.limeBorder}`,
+                        color: c.accent,
                         fontFamily: font.mono,
                         fontSize: 11,
                         letterSpacing: ".06em",
                         padding: "5px 10px",
                         cursor: "pointer",
                       }}
-                      hoverStyle={{ background: "#11150C" }}
+                      hoverStyle={{ background: c.limeWash }}
                     >
                       {genBusyR ? "✦ GENERATING…" : "✦ AUTO-GENERATE"}
                     </Btn>
@@ -554,9 +555,9 @@ function HireInner() {
                     style={{
                       width: "100%",
                       minHeight: 80,
-                      background: "#0E1116",
-                      border: "1px solid #232B38",
-                      color: "#E8ECF1",
+                      background: c.panel,
+                      border: `1px solid ${c.border}`,
+                      color: c.text,
                       padding: "12px 14px",
                       fontSize: 15,
                       fontFamily: font.sans,
@@ -571,7 +572,7 @@ function HireInner() {
                       fontFamily: font.mono,
                       fontSize: 11,
                       letterSpacing: ".12em",
-                      color: "#9AA3B2",
+                      color: c.muted,
                       marginBottom: 8,
                     }}
                   >
@@ -592,8 +593,8 @@ function HireInner() {
                           display: "flex",
                           alignItems: "center",
                           gap: 12,
-                          border: "1px solid #232B38",
-                          background: "#0E1116",
+                          border: `1px solid ${c.border}`,
+                          background: c.panel,
                           padding: "10px 14px",
                         }}
                       >
@@ -601,12 +602,12 @@ function HireInner() {
                           style={{
                             fontFamily: font.mono,
                             fontSize: 12,
-                            color: "#D8FF3E",
+                            color: c.accent,
                           }}
                         >
                           {String(i + 1).padStart(2, "0")}
                         </span>
-                        <span style={{ fontSize: 14.5, color: "#C6CEDA", flex: 1 }}>
+                        <span style={{ fontSize: 14.5, color: c.text2, flex: 1 }}>
                           {txt}
                         </span>
                         <Btn
@@ -614,12 +615,12 @@ function HireInner() {
                           style={{
                             background: "none",
                             border: "none",
-                            color: "#525B6B",
+                            color: c.faint,
                             cursor: "pointer",
                             fontSize: 15,
                             padding: 0,
                           }}
-                          hoverStyle={{ color: "#F87171" }}
+                          hoverStyle={{ color: c.red }}
                         >
                           ✕
                         </Btn>
@@ -636,9 +637,9 @@ function HireInner() {
                       placeholder="Add a task and press Enter…"
                       style={{
                         flex: 1,
-                        background: "#0E1116",
-                        border: "1px dashed #2A3342",
-                        color: "#E8ECF1",
+                        background: c.panel,
+                        border: `1px dashed ${c.borderStrong}`,
+                        color: c.text,
                         padding: "11px 14px",
                         fontSize: 14.5,
                         fontFamily: font.sans,
@@ -648,9 +649,9 @@ function HireInner() {
                     <button
                       onClick={addTask}
                       style={{
-                        border: "1px solid #2A3342",
+                        border: `1px solid ${c.borderStrong}`,
                         background: "transparent",
-                        color: "#D8FF3E",
+                        color: c.accent,
                         padding: "0 18px",
                         fontFamily: font.space,
                         fontSize: 14,
@@ -667,7 +668,7 @@ function HireInner() {
                       fontFamily: font.mono,
                       fontSize: 11,
                       letterSpacing: ".12em",
-                      color: "#9AA3B2",
+                      color: c.muted,
                       marginBottom: 8,
                     }}
                   >
@@ -678,9 +679,9 @@ function HireInner() {
                     onChange={(e) => setRemind(e.target.value)}
                     style={{
                       width: "100%",
-                      background: "#0E1116",
-                      border: "1px solid #232B38",
-                      color: "#E8ECF1",
+                      background: c.panel,
+                      border: `1px solid ${c.border}`,
+                      color: c.text,
                       padding: "12px 14px",
                       fontSize: 15,
                       fontFamily: font.sans,
@@ -706,7 +707,7 @@ function HireInner() {
               >
                 Engine &amp; channels
               </h2>
-              <p style={{ color: "#9AA3B2", margin: "0 0 32px" }}>
+              <p style={{ color: c.muted, margin: "0 0 32px" }}>
                 Pick the runtime — or let us match it to the brief. Add the channels you'll
                 manage it from.
               </p>
@@ -740,7 +741,7 @@ function HireInner() {
                         fontFamily: font.mono,
                         fontSize: 10.5,
                         letterSpacing: ".1em",
-                        color: "#D8FF3E",
+                        color: c.accent,
                       }}
                     >
                       RECOMMENDED
@@ -750,7 +751,7 @@ function HireInner() {
                         width: 14,
                         height: 14,
                         borderRadius: "50%",
-                        border: "1px solid #3A4520",
+                        border: `1px solid ${c.limeBorder}`,
                         background: ec.auto.dot,
                       }}
                     />
@@ -765,7 +766,7 @@ function HireInner() {
                   >
                     Auto-match
                   </div>
-                  <div style={{ fontSize: 13, color: "#9AA3B2" }}>
+                  <div style={{ fontSize: 13, color: c.muted }}>
                     We read the brief and pick. Switch anytime.
                   </div>
                 </div>
@@ -801,7 +802,7 @@ function HireInner() {
                         width: 14,
                         height: 14,
                         borderRadius: "50%",
-                        border: "1px solid #3A4520",
+                        border: `1px solid ${c.limeBorder}`,
                         background: ec.open.dot,
                       }}
                     />
@@ -816,7 +817,7 @@ function HireInner() {
                   >
                     OpenClaw
                   </div>
-                  <div style={{ fontSize: 13, color: "#9AA3B2" }}>
+                  <div style={{ fontSize: 13, color: c.muted }}>
                     100+ skills, every chat channel, huge ecosystem.
                   </div>
                 </div>
@@ -842,7 +843,7 @@ function HireInner() {
                         fontFamily: font.mono,
                         fontSize: 10.5,
                         letterSpacing: ".1em",
-                        color: "#6AA6FF",
+                        color: c.blue,
                       }}
                     >
                       PRECISION
@@ -852,7 +853,7 @@ function HireInner() {
                         width: 14,
                         height: 14,
                         borderRadius: "50%",
-                        border: "1px solid #3A4520",
+                        border: `1px solid ${c.limeBorder}`,
                         background: ec.hermes.dot,
                       }}
                     />
@@ -867,7 +868,7 @@ function HireInner() {
                   >
                     Hermes
                   </div>
-                  <div style={{ fontSize: 13, color: "#9AA3B2" }}>
+                  <div style={{ fontSize: 13, color: c.muted }}>
                     Deep reasoning, guardrails, full audit trail.
                   </div>
                 </div>
@@ -877,7 +878,7 @@ function HireInner() {
                   fontFamily: font.mono,
                   fontSize: 11,
                   letterSpacing: ".12em",
-                  color: "#9AA3B2",
+                  color: c.muted,
                   marginBottom: 12,
                 }}
               >
@@ -893,9 +894,9 @@ function HireInner() {
                         setChannels((cs) => ({ ...cs, [label]: !cs[label] }))
                       }
                       style={{
-                        border: "1px solid " + (on ? LIME : BORD),
-                        background: on ? "#11150C" : "transparent",
-                        color: on ? "#E8ECF1" : "#9AA3B2",
+                        border: "1px solid " + (on ? ACCENT : BORD),
+                        background: on ? c.limeWash : "transparent",
+                        color: on ? c.text : c.muted,
                         padding: "10px 18px",
                         fontSize: 14,
                         fontFamily: font.sans,
@@ -907,7 +908,7 @@ function HireInner() {
                   );
                 })}
               </div>
-              <div style={{ fontSize: 13, color: "#525B6B", marginTop: 14 }}>
+              <div style={{ fontSize: 13, color: c.faint, marginTop: 14 }}>
                 Web console is always included. Tokens &amp; accounts are configured in Dashboard
                 → Channels after launch.
               </div>
@@ -928,13 +929,13 @@ function HireInner() {
               >
                 Review &amp; launch
               </h2>
-              <p style={{ color: "#9AA3B2", margin: "0 0 32px" }}>
+              <p style={{ color: c.muted, margin: "0 0 32px" }}>
                 A dedicated machine will be provisioned for this agent.
               </p>
               <div
                 style={{
-                  border: "1px solid #232B38",
-                  background: "#0E1116",
+                  border: `1px solid ${c.border}`,
+                  background: c.panel,
                   marginBottom: 24,
                 }}
               >
@@ -964,19 +965,19 @@ function HireInner() {
                       display: "flex",
                       justifyContent: "space-between",
                       padding: "16px 20px",
-                      borderBottom: row.last ? undefined : "1px solid #1B212C",
+                      borderBottom: row.last ? undefined : `1px solid ${c.line}`,
                     }}
                   >
                     <span
                       style={{
                         fontFamily: font.mono,
                         fontSize: 12,
-                        color: "#525B6B",
+                        color: c.faint,
                       }}
                     >
                       {row.k}
                     </span>
-                    <span style={{ fontSize: 14.5, color: "#E8ECF1" }}>{row.v}</span>
+                    <span style={{ fontSize: 14.5, color: c.text }}>{row.v}</span>
                   </div>
                 ))}
               </div>
@@ -985,8 +986,8 @@ function HireInner() {
                 <Btn
                   onClick={launch}
                   style={{
-                    background: "#D8FF3E",
-                    color: "#0B0D10",
+                    background: c.lime,
+                    color: c.ink,
                     border: "none",
                     padding: "16px 32px",
                     fontFamily: font.space,
@@ -995,7 +996,7 @@ function HireInner() {
                     cursor: "pointer",
                     width: "100%",
                   }}
-                  hoverStyle={{ background: "#E9FF7A" }}
+                  hoverStyle={{ background: c.limeHover }}
                 >
                   ⏻ Launch {revName}
                 </Btn>
@@ -1004,8 +1005,8 @@ function HireInner() {
               {launching && (
                 <div
                   style={{
-                    border: "1px solid #3A4520",
-                    background: "#0B0D10",
+                    border: `1px solid ${c.limeBorder}`,
+                    background: c.bg,
                     padding: 24,
                     fontFamily: font.mono,
                     fontSize: 13.5,
@@ -1044,8 +1045,8 @@ function HireInner() {
                 <div
                   style={{
                     marginTop: 20,
-                    border: "1px solid #1E3A2A",
-                    background: "#0F1A14",
+                    border: `1px solid ${c.greenBorder}`,
+                    background: c.greenWash,
                     padding: "20px 24px",
                     display: "flex",
                     alignItems: "center",
@@ -1059,20 +1060,20 @@ function HireInner() {
                         fontFamily: font.space,
                         fontWeight: 700,
                         fontSize: 17,
-                        color: "#4ADE80",
+                        color: c.green,
                       }}
                     >
                       {revName} is live.
                     </div>
-                    <div style={{ fontSize: 13.5, color: "#9AA3B2", marginTop: 3 }}>
+                    <div style={{ fontSize: 13.5, color: c.muted, marginTop: 3 }}>
                       First task started. You'll get a summary at 18:00.
                     </div>
                   </div>
                   <button
                     onClick={enterDash}
                     style={{
-                      background: "#4ADE80",
-                      color: "#0B0D10",
+                      background: c.green,
+                      color: c.ink,
                       border: "none",
                       padding: "12px 22px",
                       fontFamily: font.space,
@@ -1098,7 +1099,7 @@ function HireInner() {
                 flexWrap: "wrap",
                 gap: 12,
                 marginTop: 48,
-                borderTop: "1px solid #1B212C",
+                borderTop: `1px solid ${c.line}`,
                 paddingTop: 24,
               }}
             >
@@ -1107,7 +1108,7 @@ function HireInner() {
                 style={{
                   background: "none",
                   border: "none",
-                  color: "#9AA3B2",
+                  color: c.muted,
                   fontSize: 14.5,
                   cursor: "pointer",
                   fontFamily: font.sans,
@@ -1119,8 +1120,8 @@ function HireInner() {
               <button
                 onClick={nextStep}
                 style={{
-                  background: canNext ? LIME : "#2A3342",
-                  color: canNext ? "#0B0D10" : "#525B6B",
+                  background: canNext ? LIME : c.borderStrong,
+                  color: canNext ? c.ink : c.faint,
                   border: "none",
                   padding: "13px 28px",
                   fontFamily: font.space,

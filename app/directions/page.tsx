@@ -142,7 +142,7 @@ export default function DirectionsPage() {
                   <div
                     style={{
                       background: c.lime,
-                      color: c.bg,
+                      color: c.ink,
                       fontFamily: font.space,
                       fontWeight: 700,
                       fontSize: 10,

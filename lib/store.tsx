@@ -21,9 +21,15 @@ import { agentsData } from "@/lib/data";
 import { detectLang } from "@/lib/i18n";
 import type { Agent, Lang } from "@/lib/types";
 
+export type Theme = "dark" | "light";
+
 interface AppState {
   lang: Lang;
   setLang: (l: Lang) => void;
+
+  theme: Theme;
+  setTheme: (t: Theme) => void;
+  toggleTheme: () => void;
 
   createdAgent: Agent | null;
   setCreatedAgent: (a: Agent | null) => void;
@@ -43,11 +49,44 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [lang, setLang] = useState<Lang>("en");
   const [createdAgent, setCreatedAgent] = useState<Agent | null>(null);
   const [paused, setPaused] = useState<Record<string, boolean>>({});
+  // Initial value matches the SSR/default ("dark"); the real value is synced
+  // from <html data-theme> (set pre-paint by the no-FOUC script in layout).
+  const [theme, setThemeState] = useState<Theme>("dark");
 
   // Default language from the browser locale, once, on mount.
   useEffect(() => {
     setLang(detectLang(typeof navigator !== "undefined" ? navigator.language : "en"));
   }, []);
+
+  // Adopt whatever the pre-paint script already applied (localStorage value).
+  useEffect(() => {
+    const applied = document.documentElement.getAttribute("data-theme");
+    if (applied === "light" || applied === "dark") setThemeState(applied);
+  }, []);
+
+  const setTheme = useCallback((t: Theme) => {
+    setThemeState(t);
+    document.documentElement.setAttribute("data-theme", t);
+    try {
+      localStorage.setItem("ark-theme", t);
+    } catch {
+      /* private mode / storage disabled — fall back to in-memory only */
+    }
+  }, []);
+
+  const toggleTheme = useCallback(
+    () => setThemeState((prev) => {
+      const next = prev === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", next);
+      try {
+        localStorage.setItem("ark-theme", next);
+      } catch {
+        /* ignore */
+      }
+      return next;
+    }),
+    [],
+  );
 
   const agents = useMemo(
     () => (createdAgent ? [...agentsData, createdAgent] : agentsData),
@@ -70,6 +109,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     () => ({
       lang,
       setLang,
+      theme,
+      setTheme,
+      toggleTheme,
       createdAgent,
       setCreatedAgent,
       agents,
@@ -78,7 +120,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       togglePause,
       isPaused,
     }),
-    [lang, createdAgent, agents, getAgent, paused, togglePause, isPaused],
+    [lang, theme, setTheme, toggleTheme, createdAgent, agents, getAgent, paused, togglePause, isPaused],
   );
 
   return <AppContext.Provider value={value}>{children}</AppContext.Provider>;

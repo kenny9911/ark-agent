@@ -18,6 +18,7 @@ type PayState = "idle" | "processing" | "done";
 type AliState = "idle" | "confirm" | "done";
 
 const LIME = c.lime;
+const ACCENT = c.accent;
 
 export default function PaymentPage() {
   const router = useRouter();
@@ -72,7 +73,7 @@ export default function PaymentPage() {
     ? yrPay
       ? [
           { l: "专业版坐席 × 1（年付）", v: "¥12,816.00" },
-          { l: "年付优惠 −20%", v: "−¥2,563.20", c: "#4ADE80" },
+          { l: "年付优惠 −20%", v: "−¥2,563.20", c: c.green },
           { l: "每月 25,000 积分", v: "已包含" },
           { l: "增值税", v: "已含" },
         ]
@@ -84,7 +85,7 @@ export default function PaymentPage() {
     : yrPay
     ? [
         { l: "Professional seat × 1 · annual", v: "$1,788.00" },
-        { l: "Annual discount −20%", v: "−$357.60", c: "#4ADE80" },
+        { l: "Annual discount −20%", v: "−$357.60", c: c.green },
         { l: "25,000 credits / mo", v: "Included" },
         { l: "Tax", v: "$0.00" },
       ]
@@ -103,7 +104,7 @@ export default function PaymentPage() {
   ).map((rt) => ({
     label: rt.label,
     bg: region === rt.id ? LIME : "transparent",
-    c: region === rt.id ? c.bg : c.muted,
+    c: region === rt.id ? c.ink : c.muted,
     fn: () => setRegion(rt.id),
   }));
 
@@ -115,7 +116,7 @@ export default function PaymentPage() {
   ).map((cy) => ({
     label: cy.label,
     bg: payCycle === cy.id ? LIME : "transparent",
-    c: payCycle === cy.id ? c.bg : c.muted,
+    c: payCycle === cy.id ? c.ink : c.muted,
     fn: () => setPayCycle(cy.id),
   }));
 
@@ -254,7 +255,7 @@ export default function PaymentPage() {
             fontFamily: font.mono,
             fontSize: "12px",
             letterSpacing: ".14em",
-            color: c.lime,
+            color: c.accent,
           }}
         >
           CHECKOUT
@@ -290,7 +291,7 @@ export default function PaymentPage() {
               fontFamily: font.mono,
               fontSize: "12px",
               letterSpacing: ".14em",
-              color: c.lime,
+              color: c.accent,
               marginBottom: "14px",
             }}
           >
@@ -354,7 +355,7 @@ export default function PaymentPage() {
                   width: "38px",
                   height: "38px",
                   background: c.lime,
-                  color: c.bg,
+                  color: c.ink,
                   display: "grid",
                   placeItems: "center",
                   fontFamily: font.space,
@@ -640,7 +641,7 @@ export default function PaymentPage() {
                     height: "52px",
                     borderRadius: "50%",
                     background: c.green,
-                    color: c.bg,
+                    color: c.ink,
                     display: "grid",
                     placeItems: "center",
                     fontSize: "26px",
@@ -678,7 +679,7 @@ export default function PaymentPage() {
                   onClick={payBackBilling}
                   style={{
                     background: c.green,
-                    color: c.bg,
+                    color: c.ink,
                     border: "none",
                     padding: "12px 26px",
                     fontFamily: font.space,
@@ -775,7 +776,7 @@ export default function PaymentPage() {
                         height: "52px",
                         borderRadius: "50%",
                         background: c.green,
-                        color: c.bg,
+                        color: c.ink,
                         display: "grid",
                         placeItems: "center",
                         fontSize: "26px",
@@ -813,7 +814,7 @@ export default function PaymentPage() {
                       onClick={payBackBilling}
                       style={{
                         background: c.green,
-                        color: c.bg,
+                        color: c.ink,
                         border: "none",
                         padding: "12px 26px",
                         fontFamily: font.space,

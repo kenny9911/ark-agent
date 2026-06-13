@@ -12,6 +12,7 @@ import { useRouter } from "next/navigation";
 import { c, font, gridBg } from "@/lib/theme";
 import { dict } from "@/lib/i18n";
 import { useApp } from "@/lib/store";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const links = [
   { href: "#roles", key: "navAgents" },
@@ -47,7 +48,7 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
         position: "fixed",
         inset: 0,
         zIndex: 100,
-        background: "rgba(11,13,16,.97)",
+        background: c.bg,
         backdropFilter: "blur(12px)",
         WebkitBackdropFilter: "blur(12px)",
         display: "flex",
@@ -159,6 +160,8 @@ export function MobileNav({ open, onClose }: { open: boolean; onClose: () => voi
             </button>
           ))}
         </div>
+
+        <ThemeToggle compact={false} style={{ alignSelf: "stretch" }} />
 
         <button
           onClick={() => {

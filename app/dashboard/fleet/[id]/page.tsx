@@ -174,7 +174,7 @@ function ChatTab({ cur }: { cur: Agent }) {
                   color: me ? c.ink : c.text,
                   padding: "11px 15px",
                   fontSize: 14.5,
-                  border: `1px solid ${me ? c.lime : c.border}`,
+                  border: `1px solid ${me ? c.accent : c.border}`,
                 }}
               >
                 {m.txt}
@@ -342,7 +342,7 @@ function PerformanceTab({ cur }: { cur: Agent }) {
                 style={{
                   border: `1px solid ${c.limeBorder}`,
                   background: ok ? c.limeWash : "transparent",
-                  color: c.lime,
+                  color: c.accent,
                   padding: "8px 14px",
                   fontFamily: font.space,
                   fontSize: 12.5,
@@ -732,7 +732,7 @@ function AgentDetailInner() {
                   style={{
                     background: "none",
                     border: "none",
-                    borderBottom: `2px solid ${on ? c.lime : "transparent"}`,
+                    borderBottom: `2px solid ${on ? c.accent : "transparent"}`,
                     color: on ? c.text : c.faint,
                     padding: "13px 22px",
                     fontSize: 14,

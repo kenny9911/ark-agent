@@ -66,7 +66,7 @@ export default function BillingPage() {
             style={{
               background: "none",
               border: `1px solid ${c.border}`,
-              color: c.lime,
+              color: c.accent,
               fontFamily: font.mono,
               fontSize: 11,
               letterSpacing: ".04em",
@@ -134,7 +134,6 @@ export default function BillingPage() {
                 fontFamily: font.mono,
                 fontSize: 12,
                 outline: "none",
-                colorScheme: "dark",
               }}
             />
             <span style={{ color: c.faint }}>→</span>
@@ -150,7 +149,6 @@ export default function BillingPage() {
                 fontFamily: font.mono,
                 fontSize: 12,
                 outline: "none",
-                colorScheme: "dark",
               }}
             />
           </>

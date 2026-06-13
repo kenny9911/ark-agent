@@ -6,8 +6,7 @@ html,
 body {
   margin: 0;
   padding: 0;
-  background: #0b0d10;
-  color-scheme: dark;
+  background: var(--c-bg);
   /* Safety net: no fixed width that hasn't been tokenized yet can make the
      page horizontally pannable on a phone (billing table, QR, etc. scroll
      within their own wrappers instead). */
@@ -31,6 +30,125 @@ a,
 label,
 summary {
   touch-action: manipulation;
+}
+
+/* =====================================================================
+   COLOR TOKEN LAYER  (typed as `c` in lib/theme.ts)
+   `:root` / [data-theme="dark"] = dark theme (default); [data-theme="light"]
+   overrides for light mode. Inline styles read these via var(--c-*), so
+   toggling the data-theme attribute on <html> re-themes the whole app with
+   no hydration cost. Dark values are tuned for stronger contrast and clearer
+   hierarchy than the original (brighter mid-tone text, more visible borders);
+   light values target WCAG-AA text on white.
+   ===================================================================== */
+:root,
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* surfaces */
+  --c-bg: #0b0d10;
+  --c-panel: #14181f;
+  --c-panel-deep: #0b0d10;
+  --c-hover: #181d25;
+  --c-glass: rgba(11, 13, 16, 0.82);
+
+  /* hairlines / borders — strengthened so structure is legible */
+  --c-line: #2a323f;
+  --c-line-soft: #20262f;
+  --c-border: #323b49;
+  --c-border-strong: #3f4a59;
+  --c-border-mute: #4c576a;
+
+  /* lime accent */
+  --c-lime: #d8ff3e;
+  --c-lime-hover: #e9ff7a;
+  --c-accent: #d8ff3e; /* lime used as TEXT / icon / thin line */
+  --c-lime-wash: #11150c;
+  --c-lime-wash2: #161b0f;
+  --c-lime-border: #46531f;
+
+  /* text ramp — brighter mids so secondary copy is readable */
+  --c-ink: #0b0d10; /* text/icon on a lime fill */
+  --c-text: #f2f5f8;
+  --c-text2: #d3dbe6;
+  --c-muted: #aeb7c5;
+  --c-faint: #7c8696;
+
+  /* status */
+  --c-green: #4ade80;
+  --c-green-wash: #0f1a14;
+  --c-green-border: #1e3a2a;
+  --c-amber: #fbbf24;
+  --c-red: #f87171;
+  --c-red-wash: #1a0f11;
+  --c-red-border: #3a2328;
+  --c-blue: #6aa6ff;
+
+  /* brand / third-party */
+  --c-stripe: #635bff;
+  --c-stripe-hover: #7a73ff;
+  --c-alipay: #1677ff;
+  --c-nav-selected: #1e2530;
+
+  /* effects */
+  --c-grid: rgba(255, 255, 255, 0.04);
+  --c-scrim: rgba(0, 0, 0, 0.6);
+  --c-scrollbar: #3f4a59;
+}
+
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces */
+  --c-bg: #ffffff;
+  --c-panel: #f5f6f8;
+  --c-panel-deep: #eceef2;
+  --c-hover: #eef0f3;
+  --c-glass: rgba(255, 255, 255, 0.85);
+
+  /* hairlines / borders — clearly visible grey on white */
+  --c-line: #e4e7ec;
+  --c-line-soft: #edeff2;
+  --c-border: #cdd3dc;
+  --c-border-strong: #b4bdc9;
+  --c-border-mute: #98a2b2;
+
+  /* lime accent — the bright lime stays a FILL (dark ink reads on it);
+     --c-accent darkens to a deep olive-lime for use as text on white. */
+  --c-lime: #d8ff3e;
+  --c-lime-hover: #e9ff7a;
+  --c-accent: #5b7a04;
+  --c-lime-wash: #f3fad3;
+  --c-lime-wash2: #eaf5c2;
+  --c-lime-border: #c2d877;
+
+  /* text ramp — AA contrast on white */
+  --c-ink: #0b0d10;
+  --c-text: #0e1116;
+  --c-text2: #2d343e;
+  --c-muted: #525a67;
+  --c-faint: #6c7480;
+
+  /* status — readable on light */
+  --c-green: #15a04a;
+  --c-green-wash: #e8f6ec;
+  --c-green-border: #bfe3cb;
+  --c-amber: #b45309;
+  --c-red: #d63a3a;
+  --c-red-wash: #fbeaea;
+  --c-red-border: #f0c4c4;
+  --c-blue: #2563eb;
+
+  /* brand / third-party */
+  --c-stripe: #635bff;
+  --c-stripe-hover: #574fee;
+  --c-alipay: #1677ff;
+  --c-nav-selected: #edeff3;
+
+  /* effects */
+  --c-grid: rgba(11, 13, 16, 0.05);
+  --c-scrim: rgba(15, 20, 30, 0.35);
+  --c-scrollbar: #c5ccd6;
 }
 
 /* =====================================================================
@@ -192,24 +310,26 @@ summary {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.55);
+    background: var(--c-scrim);
     z-index: 100;
     animation: fadeIn 0.18s ease;
   }
 }
 
 body {
-  color: #e8ecf1;
+  color: var(--c-text);
   font-family: var(--font-sans), "Instrument Sans", system-ui, sans-serif;
   font-size: 16px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  /* Smooth the transition when toggling themes. */
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
 ::placeholder {
-  color: #525b6b;
+  color: var(--c-faint);
 }
 
 a {
@@ -220,22 +340,20 @@ button {
   font-family: inherit;
 }
 
-/* Native date pickers in the billing range read on dark surfaces */
-input[type="date"] {
-  color-scheme: dark;
-}
+/* Native controls (date pickers, etc.) follow the active theme via the
+   color-scheme set on :root / [data-theme] above — no override needed. */
 
 /* Thin scrollbars inside scrolling panels (chat, etc.) */
 .ark-scroll {
   scrollbar-width: thin;
-  scrollbar-color: #2a3342 transparent;
+  scrollbar-color: var(--c-scrollbar) transparent;
 }
 .ark-scroll::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 .ark-scroll::-webkit-scrollbar-thumb {
-  background: #2a3342;
+  background: var(--c-scrollbar);
 }
 .ark-scroll::-webkit-scrollbar-track {
   background: transparent;

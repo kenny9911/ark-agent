@@ -268,9 +268,9 @@ export const heroFeed = [
 /** Dashboard overview live-activity feed. */
 export const overviewFeed = [
   { time: "09:44", who: "Atlas", hue: c.blue, txt: "resolved WeChat ticket #482 — voucher issued" },
-  { time: "09:41", who: "Nova", hue: LIME, txt: "booked intro call with Meridian Logistics" },
+  { time: "09:41", who: "Nova", hue: c.accent, txt: "booked intro call with Meridian Logistics" },
   { time: "09:21", who: "Atlas", hue: c.blue, txt: "escalated a ¥2,350 refund for your approval" },
-  { time: "08:55", who: "Nova", hue: LIME, txt: "enriched 38 contacts from the SEA list" },
+  { time: "08:55", who: "Nova", hue: c.accent, txt: "enriched 38 contacts from the SEA list" },
   { time: "08:30", who: "Juno", hue: "#A78BFA", txt: "submitted 2 drafts for your review" },
   { time: "07:00", who: "Mei", hue: "#F472B6", txt: "sent your morning brief — 3 meetings today" },
 ];

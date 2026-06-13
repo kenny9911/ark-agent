@@ -89,7 +89,7 @@ export default function AuthPage() {
               placeItems: "center",
               fontFamily: font.space,
               fontWeight: 700,
-              color: c.bg,
+              color: c.ink,
               fontSize: 15,
             }}
           >
@@ -112,7 +112,7 @@ export default function AuthPage() {
               fontFamily: font.mono,
               fontSize: 12,
               letterSpacing: ".14em",
-              color: c.lime,
+              color: c.accent,
               marginBottom: 18,
             }}
           >
@@ -360,7 +360,7 @@ export default function AuthPage() {
               hoverStyle={{ background: c.limeHover }}
               style={{
                 background: c.lime,
-                color: c.bg,
+                color: c.ink,
                 border: "none",
                 padding: 14,
                 fontFamily: font.space,
@@ -385,7 +385,7 @@ export default function AuthPage() {
               <>
                 <Btn
                   onClick={() => setAuth("forgot")}
-                  hoverStyle={{ color: c.lime }}
+                  hoverStyle={{ color: c.accent }}
                   style={{
                     background: "none",
                     border: "none",
@@ -403,7 +403,7 @@ export default function AuthPage() {
                   style={{
                     background: "none",
                     border: "none",
-                    color: c.lime,
+                    color: c.accent,
                     cursor: "pointer",
                     fontFamily: font.sans,
                     fontSize: 13.5,
@@ -424,7 +424,7 @@ export default function AuthPage() {
                   style={{
                     background: "none",
                     border: "none",
-                    color: c.lime,
+                    color: c.accent,
                     cursor: "pointer",
                     fontFamily: font.sans,
                     fontSize: 13.5,

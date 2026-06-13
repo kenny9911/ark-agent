@@ -8,6 +8,7 @@ import { useApp } from "@/lib/store";
 import { landingRoles, heroFeed } from "@/lib/data";
 import { Btn, HoverDiv } from "@/components/ui";
 import { MobileNav } from "@/components/MobileNav";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -28,7 +29,7 @@ export default function LandingPage() {
   const feedLines = [0, 1, 2, 3].map((i) => heroFeed[(off + i) % len]);
 
   const langBg = (l: typeof lang) => (lang === l ? c.lime : "transparent");
-  const langC = (l: typeof lang) => (lang === l ? "#0B0D10" : c.muted);
+  const langC = (l: typeof lang) => (lang === l ? c.ink : c.muted);
 
   return (
     <div style={{ minHeight: "100vh" }}>
@@ -38,7 +39,7 @@ export default function LandingPage() {
           position: "sticky",
           top: 0,
           zIndex: 50,
-          background: "rgba(11,13,16,.85)",
+          background: c.glass,
           backdropFilter: "blur(12px)",
           borderBottom: `1px solid ${c.line}`,
         }}
@@ -156,6 +157,7 @@ export default function LandingPage() {
                 繁
               </button>
             </div>
+            <ThemeToggle />
             <button
               onClick={() => router.push("/auth")}
               style={{
@@ -216,7 +218,7 @@ export default function LandingPage() {
       <div
         style={{
           backgroundImage:
-            "linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px)",
+            "linear-gradient(var(--c-grid) 1px, transparent 1px), linear-gradient(90deg, var(--c-grid) 1px, transparent 1px)",
           backgroundSize: "52px 52px",
           borderBottom: `1px solid ${c.line}`,
         }}
@@ -238,7 +240,7 @@ export default function LandingPage() {
                 fontFamily: font.mono,
                 fontSize: 12,
                 letterSpacing: ".14em",
-                color: c.lime,
+                color: c.accent,
                 marginBottom: 24,
               }}
             >
@@ -256,7 +258,7 @@ export default function LandingPage() {
             >
               {t.heroT1}
               <br />
-              <span style={{ color: c.lime }}>{t.heroT2}</span>
+              <span style={{ color: c.accent }}>{t.heroT2}</span>
             </h1>
             <p
               style={{
@@ -298,7 +300,7 @@ export default function LandingPage() {
                   fontSize: 16,
                   cursor: "pointer",
                 }}
-                hoverStyle={{ borderColor: c.lime, color: c.lime }}
+                hoverStyle={{ borderColor: c.accent, color: c.accent }}
               >
                 {t.cta2}
               </Btn>
@@ -470,7 +472,7 @@ export default function LandingPage() {
                   marginLeft: "auto",
                   fontFamily: font.mono,
                   fontSize: 12,
-                  color: c.lime,
+                  color: c.accent,
                 }}
               >
                 2,180 credits this week
@@ -487,7 +489,7 @@ export default function LandingPage() {
             fontFamily: font.mono,
             fontSize: 12,
             letterSpacing: ".14em",
-            color: c.lime,
+            color: c.accent,
             marginBottom: 16,
           }}
         >
@@ -581,7 +583,7 @@ export default function LandingPage() {
                 }}
               >
                 <span>{r.price}</span>
-                <span style={{ color: c.lime }}>HIRE →</span>
+                <span style={{ color: c.accent }}>HIRE →</span>
               </div>
             </HoverDiv>
           ))}
@@ -603,7 +605,7 @@ export default function LandingPage() {
               fontFamily: font.mono,
               fontSize: 12,
               letterSpacing: ".14em",
-              color: c.lime,
+              color: c.accent,
               marginBottom: 16,
             }}
           >
@@ -626,7 +628,7 @@ export default function LandingPage() {
           <div style={{ display: "grid", gridTemplateColumns: r.col3, gap: r.gapMd }}>
             <div style={{ borderTop: `1px solid ${c.borderStrong}`, paddingTop: 24 }}>
               <div
-                style={{ fontFamily: font.mono, fontSize: 13, color: c.lime, marginBottom: 14 }}
+                style={{ fontFamily: font.mono, fontSize: 13, color: c.accent, marginBottom: 14 }}
               >
                 01
               </div>
@@ -647,7 +649,7 @@ export default function LandingPage() {
             </div>
             <div style={{ borderTop: `1px solid ${c.borderStrong}`, paddingTop: 24 }}>
               <div
-                style={{ fontFamily: font.mono, fontSize: 13, color: c.lime, marginBottom: 14 }}
+                style={{ fontFamily: font.mono, fontSize: 13, color: c.accent, marginBottom: 14 }}
               >
                 02
               </div>
@@ -668,7 +670,7 @@ export default function LandingPage() {
             </div>
             <div style={{ borderTop: `1px solid ${c.borderStrong}`, paddingTop: 24 }}>
               <div
-                style={{ fontFamily: font.mono, fontSize: 13, color: c.lime, marginBottom: 14 }}
+                style={{ fontFamily: font.mono, fontSize: 13, color: c.accent, marginBottom: 14 }}
               >
                 03
               </div>
@@ -733,7 +735,7 @@ export default function LandingPage() {
             fontFamily: font.mono,
             fontSize: 12,
             letterSpacing: ".14em",
-            color: c.lime,
+            color: c.accent,
             marginBottom: 16,
           }}
         >
@@ -827,7 +829,7 @@ export default function LandingPage() {
                 fontFamily: font.mono,
                 fontSize: 11,
                 letterSpacing: ".12em",
-                color: c.lime,
+                color: c.accent,
                 marginBottom: 18,
               }}
             >
@@ -873,7 +875,7 @@ export default function LandingPage() {
                 fontFamily: font.mono,
                 fontSize: 12,
                 letterSpacing: ".14em",
-                color: c.lime,
+                color: c.accent,
                 marginBottom: 16,
               }}
             >
@@ -901,7 +903,7 @@ export default function LandingPage() {
                 "An improvement queue you approve with one tap",
               ].map((txt) => (
                 <div key={txt} style={{ display: "flex", gap: 14, alignItems: "baseline" }}>
-                  <span style={{ fontFamily: font.mono, color: c.lime, fontSize: 13 }}>→</span>
+                  <span style={{ fontFamily: font.mono, color: c.accent, fontSize: 13 }}>→</span>
                   <span style={{ color: c.text2, fontSize: 15 }}>{txt}</span>
                 </div>
               ))}
@@ -1017,7 +1019,7 @@ export default function LandingPage() {
                 style={{
                   border: `1px solid ${c.limeBorder}`,
                   background: approved ? c.limeWash : "transparent",
-                  color: c.lime,
+                  color: c.accent,
                   padding: "9px 16px",
                   fontFamily: font.space,
                   fontWeight: 500,
@@ -1039,7 +1041,7 @@ export default function LandingPage() {
             fontFamily: font.mono,
             fontSize: 12,
             letterSpacing: ".14em",
-            color: c.lime,
+            color: c.accent,
             marginBottom: 16,
           }}
         >
@@ -1125,16 +1127,16 @@ export default function LandingPage() {
               }}
             >
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>5,000 credits included monthly
+                <span style={{ color: c.accent }}>✓</span>5,000 credits included monthly
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>1 messaging channel
+                <span style={{ color: c.accent }}>✓</span>1 messaging channel
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Weekly self-review
+                <span style={{ color: c.accent }}>✓</span>Weekly self-review
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>OpenClaw engine
+                <span style={{ color: c.accent }}>✓</span>OpenClaw engine
               </div>
             </div>
             <Btn
@@ -1149,7 +1151,7 @@ export default function LandingPage() {
                 fontSize: 15,
                 cursor: "pointer",
               }}
-              hoverStyle={{ borderColor: c.lime, color: c.lime }}
+              hoverStyle={{ borderColor: c.accent, color: c.accent }}
             >
               Start hiring
             </Btn>
@@ -1158,7 +1160,7 @@ export default function LandingPage() {
           {/* Professional */}
           <div
             style={{
-              border: `1px solid ${c.lime}`,
+              border: `1px solid ${c.accent}`,
               background: c.panel,
               padding: "32px 28px",
               display: "flex",
@@ -1215,19 +1217,19 @@ export default function LandingPage() {
               }}
             >
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>25,000 credits included monthly
+                <span style={{ color: c.accent }}>✓</span>25,000 credits included monthly
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>All channels — Telegram to WeChat
+                <span style={{ color: c.accent }}>✓</span>All channels — Telegram to WeChat
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Daily self-review + persistent memory
+                <span style={{ color: c.accent }}>✓</span>Daily self-review + persistent memory
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Both engines + auto-match
+                <span style={{ color: c.accent }}>✓</span>Both engines + auto-match
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Priority compute
+                <span style={{ color: c.accent }}>✓</span>Priority compute
               </div>
             </div>
             <Btn
@@ -1292,19 +1294,19 @@ export default function LandingPage() {
               }}
             >
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>100,000 credits included monthly
+                <span style={{ color: c.accent }}>✓</span>100,000 credits included monthly
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Dedicated VM resources
+                <span style={{ color: c.accent }}>✓</span>Dedicated VM resources
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>OPC mode — one agent, many hats
+                <span style={{ color: c.accent }}>✓</span>OPC mode — one agent, many hats
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>Audit log &amp; approval workflows
+                <span style={{ color: c.accent }}>✓</span>Audit log &amp; approval workflows
               </div>
               <div style={{ display: "flex", gap: 10 }}>
-                <span style={{ color: c.lime }}>✓</span>White-glove onboarding
+                <span style={{ color: c.accent }}>✓</span>White-glove onboarding
               </div>
             </div>
             <Btn
@@ -1319,7 +1321,7 @@ export default function LandingPage() {
                 fontSize: 15,
                 cursor: "pointer",
               }}
-              hoverStyle={{ borderColor: c.lime, color: c.lime }}
+              hoverStyle={{ borderColor: c.accent, color: c.accent }}
             >
               Start hiring
             </Btn>
@@ -1479,7 +1481,7 @@ export default function LandingPage() {
                 textAlign: "left",
                 width: "fit-content",
               }}
-              hoverStyle={{ color: c.lime, borderColor: c.limeBorder }}
+              hoverStyle={{ color: c.accent, borderColor: c.limeBorder }}
             >
               ⌥ DESIGN DIRECTIONS
             </Btn>
