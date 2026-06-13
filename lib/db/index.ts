@@ -52,9 +52,28 @@ function createClient() {
 // Reuse a single client across HMR reloads in dev to avoid exhausting the pool.
 const globalForDb = globalThis as unknown as {
   __arkPg?: ReturnType<typeof postgres>;
+  __arkDb?: ReturnType<typeof drizzle<typeof schema>>;
 };
-const client = globalForDb.__arkPg ?? createClient();
-if (process.env.NODE_ENV !== "production") globalForDb.__arkPg = client;
 
-export const db = drizzle(client, { schema });
+// Lazily build the Drizzle client on FIRST USE (not at import). This keeps
+// module evaluation side-effect-free, so `next build` — which imports route
+// modules to read their config — never fails when DATABASE_URL is absent at
+// build time; the connection is only created when a query actually runs.
+function getDb(): ReturnType<typeof drizzle<typeof schema>> {
+  if (globalForDb.__arkDb) return globalForDb.__arkDb;
+  const client = globalForDb.__arkPg ?? createClient();
+  if (process.env.NODE_ENV !== "production") globalForDb.__arkPg = client;
+  const instance = drizzle(client, { schema });
+  globalForDb.__arkDb = instance;
+  return instance;
+}
+
+export const db = new Proxy({} as ReturnType<typeof drizzle<typeof schema>>, {
+  get(_target, prop) {
+    const real = getDb() as unknown as Record<string | symbol, unknown>;
+    const value = real[prop];
+    return typeof value === "function" ? (value as (...a: unknown[]) => unknown).bind(real) : value;
+  },
+});
+
 export { schema };
