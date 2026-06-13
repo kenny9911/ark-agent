@@ -17,6 +17,7 @@ import type {
   Plan,
   AgentRole,
 } from "@/lib/db/schema";
+import { mergeSettings } from "@/lib/agent-settings";
 
 export function publicUser(u: User) {
   return { id: u.id, email: u.email, name: u.name, locale: u.locale };
@@ -53,6 +54,7 @@ export function serializeAgent(
     deploymentStatus: a.deploymentStatus,
     instructions: a.instructions,
     rules: a.rules,
+    settings: mergeSettings(a.settings),
     channels: opts.channels ?? [],
     line: opts.line ?? null,
     uptimeStartedAt: a.uptimeStartedAt,

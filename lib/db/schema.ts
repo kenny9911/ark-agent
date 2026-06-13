@@ -28,6 +28,7 @@ import {
   uniqueIndex,
   primaryKey,
 } from "drizzle-orm/pg-core";
+import type { StoredAgentSettings } from "../agent-settings";
 
 // ---------------------------------------------------------------------------
 // Enums
@@ -239,6 +240,9 @@ export const agents = pgTable(
     // Presentation accent (mirrors role hue but overridable).
     hue: varchar("hue", { length: 16 }),
     creditsUsed: integer("credits_used").notNull().default(0),
+    // Configurable agent settings (behavior, autonomy, schedule, model, skills,
+    // tools, memory, limits). Merged over DEFAULT_SETTINGS on read.
+    settings: jsonb("settings").$type<StoredAgentSettings>().notNull().default({}),
 
     // ---- Shared with the external Agent Manager ----
     agentManagerId: varchar("agent_manager_id", { length: 120 }),

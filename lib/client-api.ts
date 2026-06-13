@@ -3,6 +3,7 @@
  * Every call sends the session cookie (same-origin) and throws ApiError on 4xx/5xx.
  */
 import type { AgentDTO } from "@/lib/serializers";
+import type { AgentSettings } from "@/lib/agent-settings";
 
 export class ApiError extends Error {
   status: number;
@@ -67,7 +68,7 @@ export const api = {
   listAgents: () => req<{ agents: AgentDTO[] }>("GET", "/api/agents"),
   getAgent: (id: string) => req<{ agent: AgentDetailDTO }>("GET", `/api/agents/${id}`),
   createAgent: (body: CreateAgentBody) => req<{ agent: AgentDetailDTO }>("POST", "/api/agents", body),
-  updateAgent: (id: string, body: Partial<CreateAgentBody>) =>
+  updateAgent: (id: string, body: UpdateAgentBody) =>
     req<{ agent: AgentDetailDTO }>("PATCH", `/api/agents/${id}`, body),
   lifecycle: (id: string, action: "pause" | "resume" | "terminate") =>
     req<{ agent: AgentDetailDTO }>("POST", `/api/agents/${id}/lifecycle`, { action }),
@@ -120,6 +121,11 @@ export interface CreateAgentBody {
   name: string; roleId: string; engine: "openclaw" | "hermes";
   planTier: "associate" | "professional" | "director"; instructions: string; rules: string;
   channels: string[]; tasks: string[];
+}
+export interface UpdateAgentBody {
+  name?: string; instructions?: string; rules?: string;
+  planTier?: "associate" | "professional" | "director"; engine?: "openclaw" | "hermes";
+  channels?: string[]; settings?: Partial<AgentSettings>;
 }
 export interface ChannelDTO {
   id: string; type: string; status: string; label: string | null; config: Record<string, string>;

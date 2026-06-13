@@ -4,6 +4,7 @@ import { agents, agentChannels, channels } from "@/lib/db/schema";
 import { getAgentManager } from "@/lib/agent-manager";
 import { requireAuth, parseBody, json, notFound } from "@/lib/api";
 import { updateAgentSchema } from "@/lib/validation";
+import { mergeSettings } from "@/lib/agent-settings";
 import { getAgentDetail, getAgentRow, setLifecycle } from "@/lib/services/agents";
 
 export const runtime = "nodejs";
@@ -29,7 +30,9 @@ export async function PATCH(req: Request, { params }: Ctx) {
   if (!row) return notFound("Agent not found");
   const parsed = await parseBody(req, updateAgentSchema);
   if (parsed.res) return parsed.res;
-  const { name, instructions, rules, planTier, channels: chanTypes } = parsed.data;
+  const { name, instructions, rules, planTier, engine, channels: chanTypes, settings } = parsed.data;
+  const nextSettings =
+    settings !== undefined ? mergeSettings({ ...(row.settings ?? {}), ...settings }) : undefined;
 
   await db
     .update(agents)
@@ -38,6 +41,8 @@ export async function PATCH(req: Request, { params }: Ctx) {
       ...(instructions !== undefined ? { instructions } : {}),
       ...(rules !== undefined ? { rules } : {}),
       ...(planTier !== undefined ? { planTier } : {}),
+      ...(engine !== undefined ? { engine } : {}),
+      ...(nextSettings !== undefined ? { settings: nextSettings } : {}),
       updatedAt: new Date(),
     })
     .where(eq(agents.id, id));

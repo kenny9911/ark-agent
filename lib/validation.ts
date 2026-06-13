@@ -32,12 +32,55 @@ export const createAgentSchema = z.object({
   tasks: z.array(z.string().min(1).max(400)).default([]),
 });
 
+export const agentSettingsSchema = z.object({
+  tone: z.enum(["professional", "friendly", "concise", "formal", "playful"]).optional(),
+  responseLanguage: z.enum(["auto", "en", "zh", "zht"]).optional(),
+  timezone: z.string().max(64).optional(),
+  autonomy: z.enum(["suggest", "ask", "auto"]).optional(),
+  approvalAmount: z.number().min(0).max(1_000_000).optional(),
+  approveExternalSends: z.boolean().optional(),
+  dailyActionLimit: z.number().int().min(0).max(100_000).optional(),
+  alwaysOn: z.boolean().optional(),
+  workStart: z.string().max(5).optional(),
+  workEnd: z.string().max(5).optional(),
+  workDays: z.array(z.number().int().min(0).max(6)).max(7).optional(),
+  heartbeatMinutes: z.number().int().min(1).max(1440).optional(),
+  escalateTo: z.string().max(320).optional(),
+  notifyNeedsReview: z.boolean().optional(),
+  notifyErrors: z.boolean().optional(),
+  dailyDigest: z.boolean().optional(),
+  digestTime: z.string().max(5).optional(),
+  model: z.string().max(80).optional(),
+  temperature: z.number().min(0).max(2).optional(),
+  maxTokens: z.number().int().min(256).max(200_000).optional(),
+  reasoningEffort: z.enum(["low", "medium", "high"]).optional(),
+  memoryEnabled: z.boolean().optional(),
+  retentionDays: z.number().int().min(1).max(3650).optional(),
+  knowledgeUrls: z.array(z.string().max(500)).max(50).optional(),
+  monthlyCreditCap: z.number().int().min(0).max(100_000_000).optional(),
+  skills: z.array(z.string().max(40)).max(64).optional(),
+  tools: z
+    .object({
+      shell: z.boolean(),
+      files: z.boolean(),
+      browser: z.boolean(),
+      docker: z.boolean(),
+      code: z.boolean(),
+    })
+    .partial()
+    .optional(),
+  selfImprove: z.boolean().optional(),
+  autoCreateSkills: z.boolean().optional(),
+});
+
 export const updateAgentSchema = z.object({
   name: z.string().min(1).max(80).optional(),
   instructions: z.string().max(8000).optional(),
   rules: z.string().max(8000).optional(),
   planTier: z.enum(["associate", "professional", "director"]).optional(),
+  engine: z.enum(["openclaw", "hermes"]).optional(),
   channels: z.array(z.enum(CHANNEL_TYPES)).optional(),
+  settings: agentSettingsSchema.optional(),
 });
 
 export const lifecycleSchema = z.object({
