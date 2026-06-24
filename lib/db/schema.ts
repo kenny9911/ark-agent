@@ -281,6 +281,36 @@ export const agentTasks = pgTable(
   (t) => [index("agent_tasks_agent_idx").on(t.agentId)],
 );
 
+// ---------------------------------------------------------------------------
+// Agent Manager config (per-agent provider-specific state from the Agent Manager)
+// ---------------------------------------------------------------------------
+// One row per (agent, provider). The full upstream response is stored opaquely
+// in `config` so the schema doesn't need to grow when the provider adds fields.
+// `externalId` is the provider's identifier for the resource (e.g. the
+// OpenClaw instance UUID), and `status` / `lastError` are convenience columns
+// for fast reads without parsing the whole blob.
+export const agentManagerConfig = pgTable(
+  "agent_manager_config",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    agentId: uuid("agent_id")
+      .notNull()
+      .references(() => agents.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 40 }).notNull(),
+    externalId: varchar("external_id", { length: 120 }).notNull(),
+    status: varchar("status", { length: 40 }).notNull().default("pending"),
+    lastError: text("last_error"),
+    // Full upstream response / config blob, opaque to us.
+    config: jsonb("config").$type<Record<string, unknown>>().notNull().default({}),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("agent_manager_config_agent_provider_uniq").on(t.agentId, t.provider),
+    index("agent_manager_config_external_idx").on(t.provider, t.externalId),
+  ],
+);
+
 export const agentActivities = pgTable(
   "agent_activities",
   {
@@ -487,3 +517,4 @@ export type Message = typeof messages.$inferSelect;
 export type Subscription = typeof subscriptions.$inferSelect;
 export type Invoice = typeof invoices.$inferSelect;
 export type UsageRecord = typeof usageRecords.$inferSelect;
+export type AgentManagerConfig = typeof agentManagerConfig.$inferSelect;

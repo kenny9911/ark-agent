@@ -160,6 +160,36 @@ export interface FleetDetailDict {
   terminateAgent: string;
   dangerNote: string;
   lifecycleError: string;
+  viewInstanceInfo: string;
+  instanceInfoTitle: string;
+  instanceInfoSubtitle: string;
+  instanceInfoEmpty: string;
+  instanceInfoLoadError: string;
+  instanceInfoClose: string;
+  instanceFieldProvider: string;
+  instanceFieldExternalId: string;
+  instanceFieldStatus: string;
+  instanceFieldCreatedAt: string;
+  instanceFieldUpdatedAt: string;
+  instanceFieldName: string;
+  instanceFieldDockerContainer: string;
+  instanceFieldDockerImage: string;
+  instanceFieldAccessUrl: string;
+  instanceFieldAccessUrls: string;
+  instanceFieldExternalApiUrl: string;
+  instanceFieldExternalApiUrls: string;
+  instanceFieldAutoStopSeconds: string;
+  instanceFieldCpuLimit: string;
+  instanceFieldMemoryLimit: string;
+  instanceFieldAutoUpdate: string;
+  instanceFieldProvisioningStatus: string;
+  instanceFieldProvisioningError: string;
+  instanceFieldLastError: string;
+  instanceFieldEnvVars: string;
+  instanceFieldModelConfig: string;
+  instanceFieldRawConfig: string;
+  instanceOpenApp: string;
+  instanceOpenVnc: string;
 
   // Detail shell
   loadAgentError: string;
@@ -314,6 +344,36 @@ const en: FleetDetailDict = {
   terminateAgent: "Terminate agent",
   dangerNote: "Pausing keeps memory and state. Terminating archives the agent and its VM after 30 days.",
   lifecycleError: "Lifecycle action failed.",
+  viewInstanceInfo: "View instance info",
+  instanceInfoTitle: "Instance info",
+  instanceInfoSubtitle: "Raw data returned by the Agent Manager at provision time.",
+  instanceInfoEmpty: "This agent has no Agent Manager config yet.",
+  instanceInfoLoadError: "Couldn’t load instance info.",
+  instanceInfoClose: "Close",
+  instanceFieldProvider: "Provider",
+  instanceFieldExternalId: "External ID",
+  instanceFieldStatus: "Status",
+  instanceFieldCreatedAt: "Created at",
+  instanceFieldUpdatedAt: "Updated at",
+  instanceFieldName: "Name",
+  instanceFieldDockerContainer: "Docker container",
+  instanceFieldDockerImage: "Docker image",
+  instanceFieldAccessUrl: "Access URL",
+  instanceFieldAccessUrls: "Access URLs",
+  instanceFieldExternalApiUrl: "External API URL",
+  instanceFieldExternalApiUrls: "External API URLs",
+  instanceFieldAutoStopSeconds: "Auto stop (seconds)",
+  instanceFieldCpuLimit: "CPU limit",
+  instanceFieldMemoryLimit: "Memory limit",
+  instanceFieldAutoUpdate: "Auto update",
+  instanceFieldProvisioningStatus: "Provisioning status",
+  instanceFieldProvisioningError: "Provisioning error",
+  instanceFieldLastError: "Last error",
+  instanceFieldEnvVars: "Env vars",
+  instanceFieldModelConfig: "Model config",
+  instanceFieldRawConfig: "Full config JSON",
+  instanceOpenApp: "Open instance",
+  instanceOpenVnc: "Open browser (VNC)",
 
   loadAgentError: "Couldn’t load this agent.",
   loadingAgent: "Loading agent…",
@@ -467,6 +527,36 @@ const zh: FleetDetailDict = {
   terminateAgent: "终止智能体",
   dangerNote: "暂停会保留记忆与状态。终止将在 30 天后归档智能体及其虚拟机。",
   lifecycleError: "生命周期操作失败。",
+  viewInstanceInfo: "查看智能体信息",
+  instanceInfoTitle: "智能体信息",
+  instanceInfoSubtitle: "Agent Manager 在创建时返回的原始数据。",
+  instanceInfoEmpty: "该智能体尚未生成 Agent Manager 配置。",
+  instanceInfoLoadError: "无法加载智能体信息。",
+  instanceInfoClose: "关闭",
+  instanceFieldProvider: "提供方",
+  instanceFieldExternalId: "外部 ID",
+  instanceFieldStatus: "状态",
+  instanceFieldCreatedAt: "创建时间",
+  instanceFieldUpdatedAt: "更新时间",
+  instanceFieldName: "名称",
+  instanceFieldDockerContainer: "Docker 容器",
+  instanceFieldDockerImage: "Docker 镜像",
+  instanceFieldAccessUrl: "访问地址",
+  instanceFieldAccessUrls: "访问地址列表",
+  instanceFieldExternalApiUrl: "外部 API 地址",
+  instanceFieldExternalApiUrls: "外部 API 地址列表",
+  instanceFieldAutoStopSeconds: "自动停止（秒）",
+  instanceFieldCpuLimit: "CPU 上限",
+  instanceFieldMemoryLimit: "内存上限",
+  instanceFieldAutoUpdate: "自动更新",
+  instanceFieldProvisioningStatus: "配置状态",
+  instanceFieldProvisioningError: "配置错误",
+  instanceFieldLastError: "最近错误",
+  instanceFieldEnvVars: "环境变量",
+  instanceFieldModelConfig: "模型配置",
+  instanceFieldRawConfig: "完整配置 JSON",
+  instanceOpenApp: "打开智能体",
+  instanceOpenVnc: "打开浏览器",
 
   loadAgentError: "无法加载该智能体。",
   loadingAgent: "正在加载智能体…",
@@ -620,6 +710,36 @@ const zht: FleetDetailDict = {
   terminateAgent: "終止智能體",
   dangerNote: "暫停會保留記憶與狀態。終止將在 30 天後封存智能體及其虛擬機。",
   lifecycleError: "生命週期操作失敗。",
+  viewInstanceInfo: "檢視實例資訊",
+  instanceInfoTitle: "實例資訊",
+  instanceInfoSubtitle: "Agent Manager 在建立時回傳的原始資料。",
+  instanceInfoEmpty: "此智能體尚未產生 Agent Manager 設定。",
+  instanceInfoLoadError: "無法載入實例資訊。",
+  instanceInfoClose: "關閉",
+  instanceFieldProvider: "提供者",
+  instanceFieldExternalId: "外部 ID",
+  instanceFieldStatus: "狀態",
+  instanceFieldCreatedAt: "建立時間",
+  instanceFieldUpdatedAt: "更新時間",
+  instanceFieldName: "名稱",
+  instanceFieldDockerContainer: "Docker 容器",
+  instanceFieldDockerImage: "Docker 映像檔",
+  instanceFieldAccessUrl: "存取網址",
+  instanceFieldAccessUrls: "存取網址列表",
+  instanceFieldExternalApiUrl: "外部 API 網址",
+  instanceFieldExternalApiUrls: "外部 API 網址列表",
+  instanceFieldAutoStopSeconds: "自動停止（秒）",
+  instanceFieldCpuLimit: "CPU 上限",
+  instanceFieldMemoryLimit: "記憶體上限",
+  instanceFieldAutoUpdate: "自動更新",
+  instanceFieldProvisioningStatus: "配置狀態",
+  instanceFieldProvisioningError: "配置錯誤",
+  instanceFieldLastError: "最近錯誤",
+  instanceFieldEnvVars: "環境變數",
+  instanceFieldModelConfig: "模型設定",
+  instanceFieldRawConfig: "完整設定 JSON",
+  instanceOpenApp: "開啟實例",
+  instanceOpenVnc: "開啟瀏覽器 (VNC)",
 
   loadAgentError: "無法載入該智能體。",
   loadingAgent: "正在載入智能體…",
@@ -773,6 +893,36 @@ const ja: FleetDetailDict = {
   terminateAgent: "エージェントを終了",
   dangerNote: "一時停止してもメモリーと状態は保持されます。終了すると30日後にエージェントとそのVMがアーカイブされます。",
   lifecycleError: "ライフサイクル操作に失敗しました。",
+  viewInstanceInfo: "インスタンス情報を表示",
+  instanceInfoTitle: "インスタンス情報",
+  instanceInfoSubtitle: "Agent Manager が作成時に返した生のデータです。",
+  instanceInfoEmpty: "このエージェントにはまだ Agent Manager 設定がありません。",
+  instanceInfoLoadError: "インスタンス情報を読み込めませんでした。",
+  instanceInfoClose: "閉じる",
+  instanceFieldProvider: "プロバイダー",
+  instanceFieldExternalId: "外部 ID",
+  instanceFieldStatus: "ステータス",
+  instanceFieldCreatedAt: "作成日時",
+  instanceFieldUpdatedAt: "更新日時",
+  instanceFieldName: "名前",
+  instanceFieldDockerContainer: "Docker コンテナ",
+  instanceFieldDockerImage: "Docker イメージ",
+  instanceFieldAccessUrl: "アクセス URL",
+  instanceFieldAccessUrls: "アクセス URL 一覧",
+  instanceFieldExternalApiUrl: "外部 API URL",
+  instanceFieldExternalApiUrls: "外部 API URL 一覧",
+  instanceFieldAutoStopSeconds: "自動停止（秒）",
+  instanceFieldCpuLimit: "CPU 上限",
+  instanceFieldMemoryLimit: "メモリ上限",
+  instanceFieldAutoUpdate: "自動更新",
+  instanceFieldProvisioningStatus: "プロビジョニング状態",
+  instanceFieldProvisioningError: "プロビジョニングエラー",
+  instanceFieldLastError: "直近のエラー",
+  instanceFieldEnvVars: "環境変数",
+  instanceFieldModelConfig: "モデル設定",
+  instanceFieldRawConfig: "完全な設定 JSON",
+  instanceOpenApp: "インスタンスを開く",
+  instanceOpenVnc: "ブラウザを開く (VNC)",
 
   loadAgentError: "このエージェントを読み込めませんでした。",
   loadingAgent: "エージェントを読み込み中…",
