@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { c, font, r } from "@/lib/theme";
 import { Btn } from "@/components/ui";
 import { api, ApiError } from "@/lib/client-api";
-import type { AgentDetailDTO, MessageDTO } from "@/lib/client-api";
+import type { AgentDetailDTO, AgentManagerProviderInfo, MessageDTO } from "@/lib/client-api";
 import {
   statusDisplay,
   ENGINE_LABEL,
@@ -173,7 +173,7 @@ function ChatTab({ cur }: { cur: AgentDetailDTO }) {
 
   useEffect(() => {
     if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages.length, loading]);
+  }, [messages]);
 
   const send = async () => {
     const body = draft.trim();
@@ -181,14 +181,53 @@ function ChatTab({ cur }: { cur: AgentDetailDTO }) {
     setSending(true);
     setError(null);
     setDraft("");
+
+    // Optimistic user bubble; the server will echo the persisted one in the
+    // `user_message` SSE chunk and we replace the temp entry then.
+    const tempId = `temp-${Date.now()}`;
+    const tempUserMsg: MessageDTO = {
+      id: tempId,
+      sender: "user",
+      body,
+      channelType: "web",
+      status: "sent",
+      meta: "YOU",
+      createdAt: new Date().toISOString(),
+    };
+    // Live-updating assistant bubble; appended immediately and grown via deltas.
+    const streamId = `stream-${Date.now()}`;
+    const streamMsg: MessageDTO = {
+      id: streamId,
+      sender: "agent",
+      body: "",
+      channelType: "web",
+      status: "delivered",
+      meta: `${cur.name.toUpperCase()} · VIA WEB`,
+      createdAt: new Date().toISOString(),
+    };
+    setMessages((prev) => [...prev, tempUserMsg, streamMsg]);
+
+    const applyDelta = (delta: string) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === streamId ? { ...m, body: m.body + delta } : m))
+      );
+    };
+
     try {
-      const res = await api.sendMessage(cur.id, body);
+      const res = await api.streamMessage(cur.id, body, { onDelta: applyDelta });
       setMessages((prev) => {
-        const next = [...prev, res.userMessage];
-        if (res.replyMessage) next.push(res.replyMessage);
-        return next;
+        const withoutTemp = prev.filter((m) => m.id !== tempId);
+        const replaced = withoutTemp.map((m) =>
+          m.id === streamId ? res.replyMessage : m
+        );
+        if (replaced.some((m) => m.id === res.replyMessage.id)) return replaced;
+        return replaced;
       });
     } catch (e) {
+      // Roll back the optimistic bubbles so the input + history stay consistent.
+      setMessages((prev) =>
+        prev.filter((m) => m.id !== tempId && m.id !== streamId)
+      );
       setDraft(body);
       setError(e instanceof ApiError ? e.message : t.chatSendError);
     } finally {
@@ -249,7 +288,7 @@ function ChatTab({ cur }: { cur: AgentDetailDTO }) {
                 <div
                   style={{
                     maxWidth: "72%",
-                    background: me ? c.lime : "#151A22",
+                    background: me ? c.lime : c.panel,
                     color: me ? c.ink : c.text,
                     padding: "11px 15px",
                     fontSize: 14.5,
@@ -780,10 +819,14 @@ function SettingsTab({ cur, onRefresh }: { cur: AgentDetailDTO; onRefresh: () =>
   const [saved, setSaved] = useState(false);
   const [lifeBusy, setLifeBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const display = statusDisplay(cur.status);
   const paused = cur.status === "paused";
+
+  const openDrawer = () => setDrawerOpen(true);
+  const closeDrawer = () => setDrawerOpen(false);
 
   function set<K extends keyof AgentSettings>(k: K, v: AgentSettings[K]) {
     setS((p) => ({ ...p, [k]: v }));
@@ -1295,6 +1338,558 @@ function SettingsTab({ cur, onRefresh }: { cur: AgentDetailDTO; onRefresh: () =>
         <div style={{ border: `1px dashed ${c.border}`, padding: "12px 14px", fontSize: 12.5, color: c.faint }}>
           {t.dangerNote}
         </div>
+        <Btn
+          onClick={openDrawer}
+          style={{
+            border: `1px solid ${c.borderStrong}`,
+            background: "transparent",
+            color: c.text,
+            padding: 12,
+            fontFamily: font.space,
+            fontWeight: 500,
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+        >
+          {t.viewInstanceInfo}
+        </Btn>
+        {drawerOpen && (
+          <InstanceInfoDrawer
+            agentId={cur.id}
+            onClose={closeDrawer}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+function InstanceInfoDrawer({ agentId, onClose }: { agentId: string; onClose: () => void }) {
+  const { lang } = useApp();
+  const t = fleetDetail[lang];
+  const [data, setData] = useState<{ providers: AgentManagerProviderInfo[] } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [openJson, setOpenJson] = useState<string | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        const res = await api.getAgentInstanceInfo(agentId);
+        if (alive) setData(res);
+      } catch (e) {
+        if (alive) setError(e instanceof ApiError ? e.message : t.instanceInfoLoadError);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [agentId, t.instanceInfoLoadError]);
+
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  return (
+    <>
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed",
+          inset: 0,
+          background: "rgba(8, 10, 14, 0.55)",
+          zIndex: 50,
+        }}
+      />
+      <aside
+        role="dialog"
+        aria-label={t.instanceInfoTitle}
+        style={{
+          position: "fixed",
+          top: 0,
+          right: 0,
+          bottom: 0,
+          width: "min(640px, 100vw)",
+          background: c.panel,
+          borderLeft: `1px solid ${c.border}`,
+          zIndex: 51,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            padding: "18px 22px",
+            borderBottom: `1px solid ${c.line}`,
+          }}
+        >
+          <div>
+            <div
+              style={{
+                fontFamily: font.space,
+                fontWeight: 700,
+                fontSize: 16,
+                color: c.text,
+              }}
+            >
+              {t.instanceInfoTitle}
+            </div>
+            <div
+              style={{
+                fontFamily: font.mono,
+                fontSize: 11,
+                color: c.faint,
+                marginTop: 4,
+              }}
+            >
+              {t.instanceInfoSubtitle}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            aria-label={t.instanceInfoClose}
+            style={{
+              background: "none",
+              border: `1px solid ${c.border}`,
+              color: c.text,
+              padding: "6px 12px",
+              fontFamily: font.mono,
+              fontSize: 12,
+              cursor: "pointer",
+            }}
+          >
+            {t.instanceInfoClose}
+          </button>
+        </div>
+        <div
+          style={{
+            flex: 1,
+            overflowY: "auto",
+            padding: "20px 22px",
+            display: "flex",
+            flexDirection: "column",
+            gap: 18,
+          }}
+        >
+          {loading && (
+            <div style={{ fontFamily: font.mono, fontSize: 12, color: c.faint }}>
+              Loading…
+            </div>
+          )}
+          {error && (
+            <div
+              style={{
+                fontFamily: font.mono,
+                fontSize: 12,
+                color: c.red,
+              }}
+            >
+              {error}
+            </div>
+          )}
+          {!loading && !error && (data?.providers.length ?? 0) === 0 && (
+            <div
+              style={{
+                fontFamily: font.mono,
+                fontSize: 12,
+                color: c.faint,
+              }}
+            >
+              {t.instanceInfoEmpty}
+            </div>
+          )}
+          {data?.providers.map((p) => (
+            <ProviderSection
+              key={`${p.provider}-${p.externalId}`}
+              provider={p}
+              jsonOpen={openJson === p.externalId}
+              onToggleJson={() =>
+                setOpenJson((cur) => (cur === p.externalId ? null : p.externalId))
+              }
+            />
+          ))}
+        </div>
+      </aside>
+    </>
+  );
+}
+
+function ProviderSection({
+  provider,
+  jsonOpen,
+  onToggleJson,
+}: {
+  provider: AgentManagerProviderInfo;
+  jsonOpen: boolean;
+  onToggleJson: () => void;
+}) {
+  const { lang } = useApp();
+  const t = fleetDetail[lang];
+  const cfg = provider.config;
+  // Look up by either snake_case or camelCase — `preprocessInstance` in
+  // `app/lib/openclaw_manager_api.ts` normalizes to camelCase before storing,
+  // but the drawer should still work if any future code path stores raw
+  // snake_case from the manager API.
+  const get = (snake: string): unknown => {
+    if (snake in cfg) return cfg[snake];
+    const camel = snake.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
+    return cfg[camel];
+  };
+  const str = (v: unknown): string | null =>
+    v === null || v === undefined ? null : typeof v === "string" ? v : JSON.stringify(v);
+  const strArr = (v: unknown): string[] =>
+    Array.isArray(v) ? v.map((x) => String(x)) : [];
+
+  return (
+    <div
+      style={{
+        border: `1px solid ${c.border}`,
+        background: c.bg,
+        padding: 16,
+        display: "flex",
+        flexDirection: "column",
+        gap: 12,
+      }}
+    >
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          fontFamily: font.mono,
+          fontSize: 11,
+          color: c.muted,
+          letterSpacing: ".08em",
+        }}
+      >
+        <span>{provider.provider.toUpperCase()}</span>
+        <span
+          style={{
+            color: provider.status === "running" ? c.green : c.faint,
+          }}
+        >
+          {provider.status}
+        </span>
+      </div>
+      <InfoField label={t.instanceFieldProvider} value={provider.provider} />
+      <InfoField label={t.instanceFieldExternalId} value={provider.externalId} mono />
+      <InfoField label={t.instanceFieldStatus} value={provider.status} />
+      {str(get("name")) !== null && <InfoField label={t.instanceFieldName} value={str(get("name"))!} />}
+ 
+      {strArr(get("access_urls")).length > 0 && (
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "120px 1fr",
+            gap: 12,
+            alignItems: "baseline",
+          }}
+        >
+          <div
+            style={{
+              fontFamily: font.mono,
+              fontSize: 10.5,
+              letterSpacing: ".1em",
+              color: c.faint,
+              textTransform: "uppercase",
+              paddingTop: 4,
+            }}
+          >
+            {t.instanceFieldAccessUrls}
+          </div>
+          <AccessUrlActions urls={strArr(get("access_urls"))} />
+        </div>
+      )}
+ 
+      {get("auto_stop_seconds") !== undefined && get("auto_stop_seconds") !== null && (
+        <InfoField
+          label={t.instanceFieldAutoStopSeconds}
+          value={String(get("auto_stop_seconds"))}
+        />
+      )}
+      {get("cpu_limit") !== undefined && get("cpu_limit") !== null && (
+        <InfoField label={t.instanceFieldCpuLimit} value={String(get("cpu_limit"))} />
+      )}
+      {str(get("memory_limit")) !== null && (
+        <InfoField label={t.instanceFieldMemoryLimit} value={str(get("memory_limit"))!} />
+      )}
+      {typeof get("auto_update") === "boolean" && (
+        <InfoField
+          label={t.instanceFieldAutoUpdate}
+          value={get("auto_update") ? "true" : "false"}
+        />
+      )}
+      {str(get("provisioning_status")) !== null && (
+        <InfoField
+          label={t.instanceFieldProvisioningStatus}
+          value={str(get("provisioning_status"))!}
+        />
+      )}
+      {str(get("provisioning_error")) !== null && (
+        <InfoField
+          label={t.instanceFieldProvisioningError}
+          value={str(get("provisioning_error"))!}
+          color={c.red}
+        />
+      )}
+      {provider.lastError && (
+        <InfoField
+          label={t.instanceFieldLastError}
+          value={provider.lastError}
+          color={c.red}
+          mono
+        />
+      )}
+      {Object.keys((get("env_vars") as Record<string, unknown> | undefined) ?? {}).length > 0 && (
+        <InfoField
+          label={t.instanceFieldEnvVars}
+          value={JSON.stringify(get("env_vars"), null, 2)}
+          mono
+          block
+        />
+      )}
+      {(() => {
+        const mc = get("model_config");
+        if (!mc || typeof mc !== "object") return null;
+        const models = (mc as Record<string, unknown>).agents
+          ? ((mc as { agents: { defaults?: { models?: Record<string, unknown> } } })
+              .agents.defaults?.models ?? null)
+          : null;
+        if (!models || typeof models !== "object" || Object.keys(models).length === 0) return null;
+        const entries = Object.entries(models);
+        return (
+          <div style={{ display: "grid", gridTemplateColumns: "120px 1fr", gap: 12 }}>
+            <div
+              style={{
+                fontFamily: font.mono,
+                fontSize: 10.5,
+                letterSpacing: ".1em",
+                color: c.faint,
+                textTransform: "uppercase",
+                paddingTop: 4,
+              }}
+            >
+              {t.instanceFieldModelConfig}
+            </div>
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                fontFamily: font.mono,
+                fontSize: 12,
+              }}
+            >
+              {entries.map(([id, body]) => {
+                const alias =
+                  body && typeof body === "object" && "alias" in body
+                    ? String((body as { alias: unknown }).alias)
+                    : "";
+                return (
+                  <div
+                    key={id}
+                    style={{
+                      display: "flex",
+                      alignItems: "baseline",
+                      gap: 10,
+                      padding: "6px 10px",
+                      border: `1px solid ${c.border}`,
+                      background: c.panelDeep,
+                      wordBreak: "break-all",
+                    }}
+                  >
+                    <span style={{ color: c.text, flex: "0 1 auto" }}>{id}</span>
+                    {alias && (
+                      <>
+                        <span style={{ color: c.faint }}>→</span>
+                        <span style={{ color: c.accent }}>{alias}</span>
+                      </>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        );
+      })()}
+      <InfoField label={t.instanceFieldCreatedAt} value={provider.createdAt} mono />
+      <InfoField label={t.instanceFieldUpdatedAt} value={provider.updatedAt} mono />
+      <div>
+        {/* <button
+          onClick={onToggleJson}
+          style={{
+            background: "none",
+            border: `1px solid ${c.border}`,
+            color: c.text,
+            padding: "6px 10px",
+            fontFamily: font.mono,
+            fontSize: 11,
+            cursor: "pointer",
+            letterSpacing: ".08em",
+          }}
+        >
+          {jsonOpen ? "−" : "+"} {t.instanceFieldRawConfig}
+        </button> */}
+        {jsonOpen && (
+          <pre
+            style={{
+              marginTop: 10,
+              padding: 12,
+              background: c.panelDeep,
+              border: `1px solid ${c.border}`,
+              fontFamily: font.mono,
+              fontSize: 11.5,
+              color: c.text2,
+              whiteSpace: "pre-wrap",
+              wordBreak: "break-all",
+              maxHeight: 320,
+              overflow: "auto",
+            }}
+          >
+            {JSON.stringify(provider.config, null, 2)}
+          </pre>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function AccessUrlActions({ urls }: { urls: string[] }) {
+  const { lang } = useApp();
+  const t = fleetDetail[lang];
+  // OpenClaw access_urls contains two URL flavors:
+  //   • token URL:    https://host/<uuid>/#token=…    → "open instance"
+  //   • VNC URL:      https://host/<uuid>/p/6080/vnc.html → "open browser"
+  const appUrl = urls.find((u) => !/vnc\.html/i.test(u)) ?? urls[0] ?? null;
+  const vncUrl = urls.find((u) => /vnc\.html/i.test(u)) ?? null;
+
+  const baseBtn: CSSProperties = {
+    background: "none",
+    border: `1px solid ${c.border}`,
+    color: c.text,
+    padding: "6px 10px",
+    fontFamily: font.mono,
+    fontSize: 11,
+    letterSpacing: ".08em",
+    cursor: "pointer",
+    textTransform: "uppercase",
+    textAlign: "center",
+    display: "inline-block",
+    textDecoration: "none",
+  };
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      {appUrl ? (
+        <a
+          href={appUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={baseBtn}
+        >
+          {t.instanceOpenApp}
+        </a>
+      ) : (
+        <span style={{ ...baseBtn, opacity: 0.4, cursor: "default" }}>
+          {t.instanceOpenApp}
+        </span>
+      )}
+      {vncUrl ? (
+        <a
+          href={vncUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={baseBtn}
+        >
+          {t.instanceOpenVnc}
+        </a>
+      ) : (
+        <span style={{ ...baseBtn, opacity: 0.4, cursor: "default" }}>
+          {t.instanceOpenVnc}
+        </span>
+      )}
+    </div>
+  );
+}
+
+function InfoField({
+  label,
+  value,
+  mono = false,
+  block = false,
+  link = false,
+  color,
+  action,
+}: {
+  label: string;
+  value: string | string[];
+  mono?: boolean;
+  block?: boolean;
+  link?: boolean;
+  color?: string;
+  action?: ReactNode;
+}) {
+  const values = Array.isArray(value) ? value : [value];
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: block ? "1fr" : "120px 1fr",
+        gap: block ? 6 : 12,
+        alignItems: "baseline",
+      }}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+        <div
+          style={{
+            fontFamily: font.mono,
+            fontSize: 10.5,
+            letterSpacing: ".1em",
+            color: c.faint,
+            textTransform: "uppercase",
+          }}
+        >
+          {label}
+        </div>
+        {action}
+      </div>
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 4,
+          fontFamily: mono ? font.mono : font.sans,
+          fontSize: 13,
+          color: color ?? c.text2,
+          wordBreak: "break-all",
+          whiteSpace: block ? "pre-wrap" : "normal",
+        }}
+      >
+        {values.map((v, i) =>
+          link && /^https?:\/\//.test(v) ? (
+            <a
+              key={i}
+              href={v}
+              target="_blank"
+              rel="noreferrer noopener"
+              style={{ color: c.accent, textDecoration: "underline" }}
+            >
+              {v}
+            </a>
+          ) : (
+            <span key={i}>{v}</span>
+          )
+        )}
       </div>
     </div>
   );

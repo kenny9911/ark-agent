@@ -1,0 +1,45 @@
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      # Mount .env from project root if it exists
+      - ../.env:.env:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - ark-agent-network
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: arkagent
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: arkagent
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U arkagent -d arkagent"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - ark-agent-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ark-agent-network:
+    driver: bridge

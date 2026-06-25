@@ -24,6 +24,9 @@ import {
   serializeMetric,
   serializeTask,
 } from "@/lib/serializers";
+import {
+  createOpenclawInstance,
+} from "@/lib/services/openclaw_instances";
 
 type ChannelType = typeof channels.$inferInsert["type"];
 type PlanTier = "associate" | "professional" | "director";
@@ -197,35 +200,35 @@ export async function createAgent(ctx: AuthContext, input: CreateAgentInput) {
     );
   }
 
-  // Ask the Agent Manager to provision the VM + deploy the engine.
-  const am = getAgentManager();
+  // Call OpenClaw Manager API to create the instance
   try {
-    const result = await am.provisionAgent({
-      externalAgentId: agent.id,
-      engine: input.engine,
-      roleId: input.roleId,
+    const categoryId = input.engine === "openclaw" ? 2 : 4;
+    const { config, preprocessed } = await createOpenclawInstance({
+      agentId: agent.id,
       name: input.name,
-      instructions: input.instructions,
-      rules: input.rules,
-      channels: types.map((t) => ({ type: t, config: {} })),
+      categoryId,
+      targetUserId: ctx.user.id,
     });
+    const dockerContainerName =
+      typeof config.config.docker_container_name === "string"
+        ? config.config.docker_container_name
+        : null;
     await db
       .update(agents)
       .set({
-        agentManagerId: result.agentManagerId,
-        vmId: result.vmId,
-        vmRegion: result.vmRegion,
-        deploymentStatus: result.deploymentStatus,
-        status: result.status as Agent["status"],
-        provisionedAt: new Date(),
-        uptimeStartedAt: new Date(),
+        agentManagerId: preprocessed.uuid,
+        vmId: dockerContainerName,
+        deploymentStatus: preprocessed.provisioningStatus,
+        status: preprocessed.isReady ? "working" : "provisioning",
+        provisionedAt: preprocessed.isReady ? new Date() : null,
+        uptimeStartedAt: preprocessed.isReady ? new Date() : null,
         lastHeartbeatAt: new Date(),
         updatedAt: new Date(),
       })
       .where(eq(agents.id, agent.id));
     await db.insert(agentActivities).values({
       agentId: agent.id,
-      text: `Provisioned on ${result.vmRegion} (${result.vmId}) and deployed the ${input.engine} engine`,
+      text: `OpenClaw instance created: ${preprocessed.uuid}, status: ${preprocessed.provisioningStatus}`,
       tag: "system",
     });
   } catch (err) {
@@ -233,6 +236,11 @@ export async function createAgent(ctx: AuthContext, input: CreateAgentInput) {
       .update(agents)
       .set({ status: "error", lastError: String(err).slice(0, 480), updatedAt: new Date() })
       .where(eq(agents.id, agent.id));
+    await db.insert(agentActivities).values({
+      agentId: agent.id,
+      text: `Failed to create OpenClaw instance: ${String(err).slice(0, 200)}`,
+      tag: "system",
+    });
   }
 
   // Create a billing seat and roll the included credits into the workspace.

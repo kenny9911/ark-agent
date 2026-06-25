@@ -84,6 +84,14 @@ export const api = {
       `/api/agents/${agentId}/messages`,
       { body },
     ),
+  streamMessage: (
+    agentId: string,
+    body: string,
+    options: {
+      onDelta: (delta: string) => void;
+      signal?: AbortSignal;
+    },
+  ) => streamMessage(agentId, body, options),
 
   // ---- dashboard / channels / billing ----
   dashboard: () => req<DashboardDTO>("GET", "/api/dashboard"),
@@ -94,6 +102,13 @@ export const api = {
   billing: () => req<BillingDTO>("GET", "/api/billing"),
   checkout: (body: { planId: string; cycle: "monthly" | "annual"; provider: "stripe" | "alipay"; agentId?: string }) =>
     req<{ subscriptionId: string; invoice: InvoiceDTO }>("POST", "/api/billing/checkout", body),
+
+  // ---- agent runtime / instance info ----
+  getAgentInstanceInfo: (agentId: string) =>
+    req<{ providers: AgentManagerProviderInfo[] }>(
+      "GET",
+      `/api/agents/${agentId}/instance-info`
+    ),
 };
 
 // ---- response shapes ----
@@ -109,6 +124,17 @@ export interface PlanDTO {
 export interface MessageDTO {
   id: string; sender: "user" | "agent" | "system"; body: string; channelType: string;
   status: string; meta: string | null; createdAt: string;
+}
+
+/** Cached Agent Manager config blob (one per provider per agent). */
+export interface AgentManagerProviderInfo {
+  provider: string;
+  externalId: string;
+  status: string;
+  lastError: string | null;
+  config: Record<string, unknown>;
+  createdAt: string;
+  updatedAt: string;
 }
 export interface TaskDTO { id: string; text: string; status: string; meta: string | null; sortOrder: number; }
 export interface ActivityDTO { id: string; text: string; tag: string; occurredAt: string; }
@@ -147,4 +173,107 @@ export interface BillingDTO {
   invoices: InvoiceDTO[];
   subscriptions: number;
   plans: PlanDTO[];
+}
+
+// ---- SSE streaming ----
+export interface StreamChunkUser {
+  type: "user_message";
+  conversationId: string;
+  message: MessageDTO;
+}
+export interface StreamChunkDelta {
+  type: "delta";
+  delta: string;
+}
+export interface StreamChunkDone {
+  type: "done";
+  conversationId: string;
+  replyMessage: MessageDTO;
+}
+export interface StreamChunkError {
+  type: "error";
+  message: string;
+}
+export type StreamChunk = StreamChunkUser | StreamChunkDelta | StreamChunkDone | StreamChunkError;
+
+async function streamMessage(
+  agentId: string,
+  body: string,
+  options: { onDelta: (delta: string) => void; signal?: AbortSignal }
+): Promise<{ conversationId: string; replyMessage: MessageDTO }> {
+  const res = await fetch(`/api/agents/${agentId}/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "text/event-stream" },
+    body: JSON.stringify({ body }),
+    credentials: "same-origin",
+    signal: options.signal,
+  });
+  return consumeSse(res, options.onDelta);
+}
+
+async function consumeSse(
+  res: Response,
+  onDelta: (delta: string) => void
+): Promise<{ conversationId: string; replyMessage: MessageDTO }> {
+  if (!res.ok || !res.body) {
+    let payload: { error?: string } | null = null;
+    try { payload = (await res.json()) as { error?: string }; } catch {}
+    throw new ApiError(payload?.error || `Request failed (${res.status})`, res.status);
+  }
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let conversationId = "";
+  let replyMessage: MessageDTO | null = null;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let idx;
+    while ((idx = buffer.indexOf("\n\n")) >= 0) {
+      const event = buffer.slice(0, idx);
+      buffer = buffer.slice(idx + 2);
+      const result = parseSseEvent(event, onDelta);
+      if (result.kind === "done") {
+        conversationId = result.conversationId;
+        replyMessage = result.replyMessage;
+      } else if (result.kind === "error") {
+        throw new ApiError(result.message, 500);
+      }
+    }
+  }
+  if (!replyMessage) throw new ApiError("Stream ended without a final reply", 500);
+  return { conversationId, replyMessage };
+}
+
+function parseSseEvent(
+  raw: string,
+  onDelta: (delta: string) => void
+):
+  | { kind: "user" }
+  | { kind: "delta" }
+  | { kind: "done"; conversationId: string; replyMessage: MessageDTO }
+  | { kind: "error"; message: string }
+  | { kind: "ignore" } {
+  let data = "";
+  for (const line of raw.split("\n")) {
+    if (line.startsWith("data:")) data += line.slice(5).trim();
+  }
+  if (!data) return { kind: "ignore" };
+  let parsed: StreamChunk;
+  try {
+    parsed = JSON.parse(data) as StreamChunk;
+  } catch {
+    return { kind: "ignore" };
+  }
+  if (parsed.type === "user_message") return { kind: "user" };
+  if (parsed.type === "delta") {
+    onDelta(parsed.delta);
+    return { kind: "delta" };
+  }
+  if (parsed.type === "done") {
+    return { kind: "done", conversationId: parsed.conversationId, replyMessage: parsed.replyMessage };
+  }
+  if (parsed.type === "error") return { kind: "error", message: parsed.message };
+  return { kind: "ignore" };
 }
