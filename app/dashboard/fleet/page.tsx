@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { c, font, r } from "@/lib/theme";
 import { api, ApiError } from "@/lib/client-api";
 import type { AgentDTO } from "@/lib/serializers";
@@ -10,6 +10,9 @@ import { statusDisplay, ENGINE_LABEL, channelsText } from "@/lib/agent-display";
 import { Btn, HoverDiv } from "@/components/ui";
 import { useApp } from "@/lib/store";
 import { fleet } from "@/lib/i18n/fleet";
+
+type EngineFilter = "all" | "openclaw" | "hermes";
+type StatusFilter = "all" | "working" | "error" | "terminated";
 
 function FleetCard({
   a,
@@ -173,6 +176,11 @@ export default function FleetPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [engineFilter, setEngineFilter] = useState<EngineFilter>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
   useEffect(() => {
     let alive = true;
     (async () => {
@@ -195,6 +203,33 @@ export default function FleetPage() {
   const handleToggle = useCallback((updated: AgentDTO) => {
     setAgents((prev) => prev.map((a) => (a.id === updated.id ? updated : a)));
   }, []);
+
+  // Get unique engines from agents
+  const uniqueEngines = useMemo(() => {
+    const engines = new Set(agents.map((a) => a.engine));
+    return Array.from(engines).sort();
+  }, [agents]);
+
+  // Filter agents based on search, engine, and status
+  const filteredAgents = useMemo(() => {
+    return agents.filter((a) => {
+      // Search filter (by name)
+      if (searchQuery && !a.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+        return false;
+      }
+      // Engine filter
+      if (engineFilter !== "all" && a.engine !== engineFilter) {
+        return false;
+      }
+      // Status filter
+      if (statusFilter !== "all" && a.status !== statusFilter) {
+        return false;
+      }
+      return true;
+    });
+  }, [agents, searchQuery, engineFilter, statusFilter]);
+
+  const hasActiveFilters = searchQuery || engineFilter !== "all" || statusFilter !== "all";
 
   return (
     <div style={{ padding: `${r.contentPy} ${r.pagePx}` }}>
@@ -228,6 +263,109 @@ export default function FleetPage() {
         </Link>
       </div>
 
+      {/* Filters */}
+      <div
+        style={{
+          display: "flex",
+          gap: 12,
+          flexWrap: "wrap",
+          marginBottom: 24,
+          alignItems: "center",
+        }}
+      >
+        {/* Search by name */}
+        <input
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          placeholder={t.filterPlaceholder}
+          style={{
+            flex: "1 1 200px",
+            maxWidth: 240,
+            background: c.panel,
+            border: `1px solid ${c.border}`,
+            color: c.text,
+            padding: "10px 14px",
+            fontSize: 14,
+            fontFamily: font.sans,
+            outline: "none",
+            borderRadius: r.radiusSm,
+          }}
+        />
+
+        {/* Filter by Engine */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <select
+            value={engineFilter}
+            onChange={(e) => setEngineFilter(e.target.value as EngineFilter)}
+            style={{
+              background: c.panel,
+              border: `1px solid ${c.border}`,
+              color: c.text,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontFamily: font.sans,
+              outline: "none",
+              cursor: "pointer",
+              borderRadius: r.radiusSm,
+            }}
+          >
+            <option value="all">{t.filterAll} {t.filterByEngine}</option>
+            {uniqueEngines.map((engine) => (
+              <option key={engine} value={engine}>
+                {ENGINE_LABEL[engine] ?? engine}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {/* Filter by Status */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as StatusFilter)}
+            style={{
+              background: c.panel,
+              border: `1px solid ${c.border}`,
+              color: c.text,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontFamily: font.sans,
+              outline: "none",
+              cursor: "pointer",
+              borderRadius: r.radiusSm,
+            }}
+          >
+            <option value="all">{t.filterAll} {t.filterByStatus}</option>
+            <option value="working">{t.statusWorking}</option>
+            <option value="error">{t.statusError}</option>
+            <option value="terminated">{t.statusTerminated}</option>
+          </select>
+        </div>
+
+        {/* Clear filters button */}
+        {hasActiveFilters && (
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setEngineFilter("all");
+              setStatusFilter("all");
+            }}
+            style={{
+              background: "none",
+              border: `1px solid ${c.border}`,
+              color: c.muted,
+              padding: "10px 14px",
+              fontSize: 13,
+              fontFamily: font.sans,
+              cursor: "pointer",
+              borderRadius: r.radiusSm,
+            }}
+          >
+            {t.clearFilters}
+          </button>
+        )}
+      </div>
+
       {loading ? (
         <div
           style={{
@@ -258,7 +396,7 @@ export default function FleetPage() {
         >
           {error}
         </div>
-      ) : agents.length === 0 ? (
+      ) : filteredAgents.length === 0 ? (
         <div
           style={{
             border: `1px solid ${c.border}`,
@@ -269,32 +407,37 @@ export default function FleetPage() {
           }}
         >
           <div style={{ fontFamily: font.space, fontWeight: 700, fontSize: 18, marginBottom: 8 }}>
-            {t.noAgentsTitle}
+            {hasActiveFilters ? t.noResults : t.noAgentsTitle}
           </div>
-          <div style={{ fontSize: 13.5, color: c.muted, marginBottom: 20 }}>
-            {t.noAgentsBody}
+          <div style={{ fontSize: 13.5, color: c.muted }}>
+            {hasActiveFilters ? "Try adjusting your filters." : t.noAgentsBody}
           </div>
-          <Link href="/hire" style={{ textDecoration: "none" }}>
+          {hasActiveFilters && (
             <button
+              onClick={() => {
+                setSearchQuery("");
+                setEngineFilter("all");
+                setStatusFilter("all");
+              }}
               style={{
-                background: c.lime,
-                color: c.ink,
-                border: "none",
-                padding: "10px 18px",
-                fontFamily: font.space,
-                fontWeight: 700,
-                fontSize: 13.5,
+                marginTop: 16,
+                background: "none",
+                border: `1px solid ${c.border}`,
+                color: c.muted,
+                padding: "8px 16px",
+                fontFamily: font.sans,
+                fontSize: 13,
                 cursor: "pointer",
                 borderRadius: r.radiusSm,
               }}
             >
-              {t.hireNewAgent}
+              {t.clearFilters}
             </button>
-          </Link>
+          )}
         </div>
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: r.col2, gap: r.gapSm }}>
-          {agents.map((a) => (
+          {filteredAgents.map((a) => (
             <FleetCard key={a.id} a={a} onToggle={handleToggle} />
           ))}
         </div>
