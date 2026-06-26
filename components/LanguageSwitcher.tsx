@@ -4,10 +4,11 @@
  * Language switch. Reads + sets the active language on the AppProvider, which
  * persists the choice to localStorage and (when signed in) to the user profile.
  * Two presentations:
- *  - compact (default): a tight segmented control of short labels (EN 简 繁 日)
- *    for nav bars and dense toolbars.
- *  - full: a stretched segmented control of native names for the mobile drawer.
+ *  - compact (default): a compact dropdown with short labels for nav bars.
+ *  - full: a wider dropdown with full language names for the mobile drawer.
+ * Both show "short + label" in the dropdown options for consistency.
  */
+import { useState, useRef, useEffect } from "react";
 import { c, font } from "@/lib/theme";
 import { useApp } from "@/lib/store";
 import { LANGS } from "@/lib/i18n";
@@ -22,40 +23,101 @@ export function LanguageSwitcher({
 }) {
   const { lang, setLang } = useApp();
   const t = common[lang];
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  const currentLang = LANGS.find((l) => l.code === lang) || LANGS[0];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) {
+      document.addEventListener("mousedown", handleClick);
+    }
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
 
   return (
-    <div
-      role="group"
-      aria-label={t.language}
-      style={{
-        display: "flex",
-        border: `1px solid ${c.border}`,
-        fontFamily: font.mono,
-        fontSize: compact ? 12 : 14,
-        ...style,
-      }}
-    >
-      {LANGS.map((l) => {
-        const on = lang === l.code;
-        return (
-          <button
-            key={l.code}
-            onClick={() => setLang(l.code)}
-            aria-pressed={on}
-            title={l.label}
-            style={{
-              border: "none",
-              cursor: "pointer",
-              flex: compact ? "0 0 auto" : 1,
-              padding: compact ? "6px 9px" : "11px 14px",
-              background: on ? c.lime : "transparent",
-              color: on ? c.ink : c.muted,
-            }}
-          >
-            {compact ? l.short : l.label}
-          </button>
-        );
-      })}
+    <div ref={ref} style={{ position: "relative", ...style }}>
+      <button
+        onClick={() => setOpen(!open)}
+        aria-label={t.language}
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          padding: compact ? "6px 10px" : "10px 14px",
+          background: "transparent",
+          border: `1px solid ${c.border}`,
+          color: c.text,
+          fontFamily: font.mono,
+          fontSize: compact ? 12 : 14,
+          cursor: "pointer",
+          minWidth: compact ? 48 : 120,
+          justifyContent: "center",
+        }}
+      >
+        <span>{compact ? currentLang.short : currentLang.label}</span>
+        <span style={{ fontSize: 10, color: c.muted }}>▼</span>
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          aria-label={t.language}
+          style={{
+            position: "absolute",
+            top: "100%",
+            left: 0,
+            marginTop: 4,
+            background: c.panel,
+            border: `1px solid ${c.border}`,
+            zIndex: 50,
+            minWidth: 140,
+            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
+          }}
+        >
+          {LANGS.map((l) => {
+            const selected = lang === l.code;
+            return (
+              <button
+                key={l.code}
+                role="option"
+                aria-selected={selected}
+                onClick={() => {
+                  setLang(l.code);
+                  setOpen(false);
+                }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 8,
+                  width: "100%",
+                  padding: "10px 14px",
+                  background: selected ? c.limeWash : "transparent",
+                  color: selected ? c.accent : c.text,
+                  border: "none",
+                  borderBottom: `1px solid ${c.line}`,
+                  cursor: "pointer",
+                  fontFamily: font.mono,
+                  fontSize: 13,
+                  textAlign: "left",
+                }}
+              >
+                <span style={{ fontWeight: 600, width: 28 }}>{l.short}</span>
+                <span style={{ color: c.muted }}>{l.label}</span>
+                {selected && <span style={{ marginLeft: "auto", color: c.lime }}>✓</span>}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -8,21 +8,23 @@ import { ENGINE_LABEL, planLabel } from "@/lib/agent-display";
 import { Btn } from "@/components/ui";
 import { useApp } from "@/lib/store";
 import { hire } from "@/lib/i18n/hire";
+import { getTranslatedRole } from "@/lib/i18n/roles";
 
 const LIME = c.lime;
 const ACCENT = c.accent;
 const INKBG = c.panel; // #0E1116
 const BORD = c.border; // #232B38
 
-/** Channel picker labels (incl. native script) mapped to API type strings. */
-const CHANNEL_OPTIONS: { label: string; type: string; on: boolean }[] = [
-  { label: "Telegram", type: "telegram", on: true },
-  { label: "WhatsApp", type: "whatsapp", on: true },
-  { label: "WeChat 微信", type: "wechat", on: false },
-  { label: "LINE", type: "line", on: false },
-  { label: "Slack", type: "slack", on: false },
-  { label: "Email", type: "email", on: false },
-];
+/** Channel picker labels mapped to API type strings. Labels are set dynamically from i18n. */
+const CHANNEL_TYPES = [
+  "telegram",
+  "whatsapp",
+  "wechat",
+  "line",
+  "slack",
+  "email",
+] as const;
+type ChannelType = (typeof CHANNEL_TYPES)[number];
 
 function HireInner() {
   const router = useRouter();
@@ -46,8 +48,8 @@ function HireInner() {
   const [taskDraft, setTaskDraft] = useState("");
   const [tasks, setTasks] = useState<string[]>(() => [...t.tasksDefault]);
   const [engine, setEngine] = useState("auto");
-  const [channels, setChannels] = useState<Record<string, boolean>>(() =>
-    Object.fromEntries(CHANNEL_OPTIONS.map((o) => [o.type, o.on])),
+  const [channels, setChannels] = useState<Record<ChannelType, boolean>>(() =>
+    Object.fromEntries(CHANNEL_TYPES.map((type) => [type, type === "telegram" || type === "whatsapp"])),
   );
   const [genBusyI, setGenBusyI] = useState(false);
   const [genBusyR, setGenBusyR] = useState(false);
@@ -102,6 +104,12 @@ function HireInner() {
     [roles, selRole],
   );
 
+  // Translated role name and blurb for display
+  const selRoleDisplay = useMemo(
+    () => selRoleObj ? getTranslatedRole(selRoleObj.id, selRoleObj.name, selRoleObj.blurb, lang) : null,
+    [selRoleObj, lang],
+  );
+
   const genInstr = () => {
     if (genBusyI || !selRoleObj) return;
     setGenBusyI(true);
@@ -127,11 +135,22 @@ function HireInner() {
   };
 
   // Selected channel TYPE strings (e.g. ["telegram","whatsapp"]).
-  const chanTypes = Object.keys(channels).filter((k) => channels[k]);
-  const chanLabels = chanTypes.map(
-    (t) => CHANNEL_OPTIONS.find((o) => o.type === t)?.label ?? t,
-  );
-  const revName = agentName.trim() || selRoleObj?.name || "Aria";
+  const chanTypes = Object.keys(channels).filter((k) => channels[k as ChannelType]);
+
+  // Channel labels from i18n
+  const getChannelLabel = (type: ChannelType): string => {
+    switch (type) {
+      case "telegram": return t.channelTelegram;
+      case "whatsapp": return t.channelWhatsApp;
+      case "wechat": return t.channelWeChat;
+      case "line": return t.channelLINE;
+      case "slack": return t.channelSlack;
+      case "email": return t.channelEmail;
+    }
+  };
+
+  const chanLabels = chanTypes.map(getChannelLabel);
+  const revName = agentName.trim() || selRoleDisplay?.name || "Aria";
 
   // Engine actually used: explicit pick, or the role's default for auto-match.
   const resolvedEngine: "openclaw" | "hermes" =
@@ -464,6 +483,7 @@ function HireInner() {
                 >
                   {roles.map((role) => {
                     const sel = selRole === role.id;
+                    const translated = getTranslatedRole(role.id, role.name, role.blurb, lang);
                     return (
                       <div
                         key={role.id}
@@ -501,9 +521,9 @@ function HireInner() {
                               fontSize: 15.5,
                             }}
                           >
-                            {role.name}
+                            {translated.name}
                           </div>
-                          <div style={{ fontSize: 12.5, color: c.muted }}>{role.blurb}</div>
+                          <div style={{ fontSize: 12.5, color: c.muted }}>{translated.blurb}</div>
                         </div>
                       </div>
                     );
@@ -528,7 +548,7 @@ function HireInner() {
                 {t.s2Title}
               </h2>
               <p style={{ color: c.muted, margin: "0 0 32px" }}>
-                {t.s2Hiring(selRoleObj?.name ?? "—")}
+                {t.s2Hiring(selRoleDisplay?.name ?? "—")}
               </p>
               <div style={{ display: "flex", flexDirection: "column", gap: 24 }}>
                 <div>
@@ -986,13 +1006,13 @@ function HireInner() {
                 {t.channelsLabel}
               </div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                {CHANNEL_OPTIONS.map((opt) => {
-                  const on = channels[opt.type];
+                {CHANNEL_TYPES.map((type) => {
+                  const on = channels[type];
                   return (
                     <button
-                      key={opt.type}
+                      key={type}
                       onClick={() =>
-                        setChannels((cs) => ({ ...cs, [opt.type]: !cs[opt.type] }))
+                        setChannels((cs) => ({ ...cs, [type]: !cs[type] }))
                       }
                       style={{
                         border: "1px solid " + (on ? ACCENT : BORD),
@@ -1004,7 +1024,7 @@ function HireInner() {
                         cursor: "pointer",
                       }}
                     >
-                      {opt.label}
+                      {getChannelLabel(type)}
                     </button>
                   );
                 })}
@@ -1040,7 +1060,7 @@ function HireInner() {
                 }}
               >
                 {[
-                  { k: t.rowRole, v: selRoleObj?.name ?? "—", last: false },
+                  { k: t.rowRole, v: selRoleDisplay?.name ?? "—", last: false },
                   { k: t.rowName, v: revName, last: false },
                   { k: t.rowEngine, v: engineName, last: false },
                   {

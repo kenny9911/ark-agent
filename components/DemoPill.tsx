@@ -7,35 +7,37 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { c, font, r } from "@/lib/theme";
+import { useApp } from "@/lib/store";
+import { common } from "@/lib/i18n/common";
 
 interface PillDef {
-  label: string;
+  labelKey: keyof typeof common.en;
   href: string;
   active: (path: string) => boolean;
 }
 
 const PILLS: PillDef[] = [
-  { label: "LANDING", href: "/", active: (p) => p === "/" },
-  { label: "SIGN IN", href: "/auth", active: (p) => p.startsWith("/auth") },
-  { label: "HIRE", href: "/hire", active: (p) => p.startsWith("/hire") },
+  { labelKey: "navLanding", href: "/", active: (p) => p === "/" },
+  { labelKey: "navSignIn", href: "/auth", active: (p) => p.startsWith("/auth") },
+  { labelKey: "navHire", href: "/hire", active: (p) => p.startsWith("/hire") },
   {
-    label: "DASHBOARD",
+    labelKey: "navDashboard",
     href: "/dashboard",
     active: (p) => p === "/dashboard" || p.startsWith("/dashboard/channels"),
   },
   {
-    label: "FLEET",
+    labelKey: "navFleet",
     href: "/dashboard/fleet",
     active: (p) => p.startsWith("/dashboard/fleet"),
   },
   {
-    label: "BILLING",
+    labelKey: "navBilling",
     href: "/dashboard/billing",
     active: (p) => p.startsWith("/dashboard/billing"),
   },
-  { label: "PAYMENT", href: "/payment", active: (p) => p.startsWith("/payment") },
+  { labelKey: "navPayment", href: "/payment", active: (p) => p.startsWith("/payment") },
   {
-    label: "DIRECTIONS",
+    labelKey: "navDirections",
     href: "/directions",
     active: (p) => p.startsWith("/directions"),
   },
@@ -43,6 +45,8 @@ const PILLS: PillDef[] = [
 
 export function DemoPill() {
   const pathname = usePathname() || "/";
+  const { lang } = useApp();
+  const t = common[lang];
 
   return (
     <div
@@ -73,7 +77,7 @@ export function DemoPill() {
         const on = p.active(pathname);
         return (
           <Link
-            key={p.label}
+            key={p.labelKey}
             href={p.href}
             style={{
               background: on ? c.lime : "transparent",
@@ -89,7 +93,7 @@ export function DemoPill() {
               flex: "0 0 auto",
             }}
           >
-            {p.label}
+            {t[p.labelKey]}
           </Link>
         );
       })}

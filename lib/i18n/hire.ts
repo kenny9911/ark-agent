@@ -54,6 +54,12 @@ export interface HireDict {
   hermesBlurb: string;
   channelsLabel: string;
   channelsNote: string;
+  channelTelegram: string;
+  channelWhatsApp: string;
+  channelWeChat: string;
+  channelLINE: string;
+  channelSlack: string;
+  channelEmail: string;
 
   // Step 4 — Review & launch
   s4Title: string;
@@ -145,6 +151,12 @@ const en: HireDict = {
   channelsLabel: "CHANNELS — WHERE YOU'LL TALK TO IT",
   channelsNote:
     "Web console is always included. Tokens & accounts are configured in Dashboard → Channels after launch.",
+  channelTelegram: "Telegram",
+  channelWhatsApp: "WhatsApp",
+  channelWeChat: "WeChat",
+  channelLINE: "LINE",
+  channelSlack: "Slack",
+  channelEmail: "Email",
 
   s4Title: "Review & launch",
   s4Sub: "A dedicated machine will be provisioned for this agent.",
@@ -230,6 +242,12 @@ const zh: HireDict = {
   hermesBlurb: "深度推理、安全护栏、完整审计记录。",
   channelsLabel: "渠道——你将在哪里与它沟通",
   channelsNote: "网页控制台始终包含在内。令牌与账号将在启动后于 控制台 → 渠道 中配置。",
+  channelTelegram: "Telegram",
+  channelWhatsApp: "WhatsApp",
+  channelWeChat: "微信",
+  channelLINE: "LINE",
+  channelSlack: "Slack",
+  channelEmail: "电子邮件",
 
   s4Title: "确认并启动",
   s4Sub: "我们将为这个智能体开通一台专属服务器。",
@@ -315,6 +333,12 @@ const zht: HireDict = {
   hermesBlurb: "深度推理、安全護欄、完整稽核紀錄。",
   channelsLabel: "管道——你將在哪裡與它溝通",
   channelsNote: "網頁主控台一律包含在內。權杖與帳號將在啟動後於 主控台 → 管道 中設定。",
+  channelTelegram: "Telegram",
+  channelWhatsApp: "WhatsApp",
+  channelWeChat: "微信",
+  channelLINE: "LINE",
+  channelSlack: "Slack",
+  channelEmail: "電子郵件",
 
   s4Title: "確認並啟動",
   s4Sub: "我們將為這個智能體開通一台專屬伺服器。",
@@ -403,6 +427,12 @@ const ja: HireDict = {
   channelsLabel: "チャネル — どこでやり取りするか",
   channelsNote:
     "Web コンソールは常に含まれます。トークンとアカウントは起動後にダッシュボード → チャネルで設定します。",
+  channelTelegram: "Telegram",
+  channelWhatsApp: "WhatsApp",
+  channelWeChat: "WeChat",
+  channelLINE: "LINE",
+  channelSlack: "Slack",
+  channelEmail: "メール",
 
   s4Title: "確認して起動",
   s4Sub: "このエージェント専用のマシンをプロビジョニングします。",
