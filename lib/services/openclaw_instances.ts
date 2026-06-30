@@ -13,10 +13,12 @@ import {
   stopInstance,
   startInstance,
   getInstance,
+  getTokenReport,
   type PreprocessedInstance,
   type PreprocessedEvent,
   type PreprocessedChatHistory,
   type PreprocessedMessage,
+  type PreprocessedTokenReport,
   type StreamChatEvent,
   type StreamChatHandle,
   type StreamChatParams,
@@ -202,6 +204,20 @@ export async function startOpenclawInstance(externalId: string): Promise<Preproc
  */
 export async function getOpenclawInstance(externalId: string): Promise<PreprocessedInstance> {
   return getInstance(externalId);
+}
+
+/**
+ * 查询 token 消耗报告
+ * @param externalId OpenClaw 实例 UUID（即 agent_manager_config.externalId）
+ * @param period 统计粒度
+ * @param days 统计天数
+ */
+export async function getOpenclawTokenReport(
+  externalId: string,
+  period: "day" | "hour" = "day",
+  days: number = 30,
+): Promise<PreprocessedTokenReport> {
+  return getTokenReport({ instanceId: externalId, period, days });
 }
 
 /**

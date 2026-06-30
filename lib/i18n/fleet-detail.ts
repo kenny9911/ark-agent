@@ -8,6 +8,7 @@ export interface FleetDetailDict {
   tabChat: string;
   tabPerformance: string;
   tabSettings: string;
+  tabUsage: string;
 
   // Activity tab
   activityEmpty: string;
@@ -38,6 +39,28 @@ export interface FleetDetailDict {
   perfApprove: string;
   perfDismiss: string;
   perfFootnote: string;
+
+  // Usage tab (token report)
+  usageRangeToday: string;
+  usageRangeD3: string;
+  usageRangeD7: string;
+  usageRangeD30: string;
+  usageLoading: string;
+  usageLoadError: string;
+  usageEmpty: string;
+  usageNotOpenclaw: string;
+  usageMetricInput: string;
+  usageMetricOutput: string;
+  usageMetricCache: string;
+  usageMetricTotal: string;
+  usageMetricCalls: string;
+  usageTotalsTitle: string;
+  usageChartTitle: (range: string) => string;
+  usageSeriesInput: string;
+  usageSeriesOutput: string;
+  usageSeriesCache: string;
+  usageSeriesTotal: string;
+  usageNoData: string;
 
   // Settings — Identity
   identityTitle: string;
@@ -208,6 +231,7 @@ const en: FleetDetailDict = {
   tabChat: "Chat",
   tabPerformance: "Performance",
   tabSettings: "Settings",
+  tabUsage: "Usage",
 
   activityEmpty: "No activity yet — this agent hasn’t logged anything.",
 
@@ -234,6 +258,27 @@ const en: FleetDetailDict = {
   perfApprove: "Approve",
   perfDismiss: "Dismiss",
   perfFootnote: "Approved changes apply at the next self-review cycle. The agent never changes its own rules.",
+
+  usageRangeToday: "Today",
+  usageRangeD3: "Last 3 days",
+  usageRangeD7: "Last 7 days",
+  usageRangeD30: "Last 30 days",
+  usageLoading: "Loading token usage…",
+  usageLoadError: "Couldn’t load token usage.",
+  usageEmpty: "No token usage recorded for this range.",
+  usageNotOpenclaw: "Token usage is only available for OpenClaw providers.",
+  usageMetricInput: "Input",
+  usageMetricOutput: "Output",
+  usageMetricCache: "Cache",
+  usageMetricTotal: "Total",
+  usageMetricCalls: "Calls",
+  usageTotalsTitle: "TOTALS",
+  usageChartTitle: (range) => `TOKEN USAGE · ${range}`,
+  usageSeriesInput: "Input tokens",
+  usageSeriesOutput: "Output tokens",
+  usageSeriesCache: "Cache tokens",
+  usageSeriesTotal: "Total tokens",
+  usageNoData: "No data in this range.",
 
   identityTitle: "IDENTITY",
   identityDesc: "Who this agent is and what powers it.",
@@ -391,6 +436,7 @@ const zh: FleetDetailDict = {
   tabChat: "对话",
   tabPerformance: "表现",
   tabSettings: "设置",
+  tabUsage: "使用统计",
 
   activityEmpty: "暂无动态——这位智能体还没有记录任何内容。",
 
@@ -417,6 +463,27 @@ const zh: FleetDetailDict = {
   perfApprove: "批准",
   perfDismiss: "忽略",
   perfFootnote: "已批准的改动将在下一次自我复盘周期生效。智能体永远不会修改自身规则。",
+
+  usageRangeToday: "今天",
+  usageRangeD3: "近 3 天",
+  usageRangeD7: "近 7 天",
+  usageRangeD30: "近 30 天",
+  usageLoading: "正在加载使用统计…",
+  usageLoadError: "无法加载使用统计。",
+  usageEmpty: "该时间范围内暂无使用记录。",
+  usageNotOpenclaw: "使用统计功能仅支持 OpenClaw 提供方。",
+  usageMetricInput: "输入",
+  usageMetricOutput: "输出",
+  usageMetricCache: "缓存",
+  usageMetricTotal: "总计",
+  usageMetricCalls: "调用",
+  usageTotalsTitle: "汇总",
+  usageChartTitle: (range) => `Token 用量 · ${range}`,
+  usageSeriesInput: "输入 Token",
+  usageSeriesOutput: "输出 Token",
+  usageSeriesCache: "缓存 Token",
+  usageSeriesTotal: "总 Token",
+  usageNoData: "该时间范围内暂无数据。",
 
   identityTitle: "身份",
   identityDesc: "这位智能体是谁，由什么驱动。",
@@ -574,6 +641,7 @@ const zht: FleetDetailDict = {
   tabChat: "對話",
   tabPerformance: "表現",
   tabSettings: "設定",
+  tabUsage: "使用統計",
 
   activityEmpty: "尚無動態——這位智能體還沒有記錄任何內容。",
 
@@ -600,6 +668,27 @@ const zht: FleetDetailDict = {
   perfApprove: "核准",
   perfDismiss: "忽略",
   perfFootnote: "已核准的變更會在下一次自我檢視週期生效。智能體永遠不會修改自身規則。",
+
+  usageRangeToday: "今天",
+  usageRangeD3: "近 3 天",
+  usageRangeD7: "近 7 天",
+  usageRangeD30: "近 30 天",
+  usageLoading: "正在載入使用統計…",
+  usageLoadError: "無法載入使用統計。",
+  usageEmpty: "該時間範圍內暫無使用記錄。",
+  usageNotOpenclaw: "使用統計功能僅支援 OpenClaw 提供方。",
+  usageMetricInput: "輸入",
+  usageMetricOutput: "輸出",
+  usageMetricCache: "快取",
+  usageMetricTotal: "總計",
+  usageMetricCalls: "呼叫",
+  usageTotalsTitle: "彙總",
+  usageChartTitle: (range) => `Token 用量 · ${range}`,
+  usageSeriesInput: "輸入 Token",
+  usageSeriesOutput: "輸出 Token",
+  usageSeriesCache: "快取 Token",
+  usageSeriesTotal: "總 Token",
+  usageNoData: "該時間範圍內暫無資料。",
 
   identityTitle: "身分",
   identityDesc: "這位智能體是誰，由什麼驅動。",
@@ -757,6 +846,7 @@ const ja: FleetDetailDict = {
   tabChat: "チャット",
   tabPerformance: "パフォーマンス",
   tabSettings: "設定",
+  tabUsage: "使用統計",
 
   activityEmpty: "アクティビティはまだありません。このエージェントは何も記録していません。",
 
@@ -783,6 +873,27 @@ const ja: FleetDetailDict = {
   perfApprove: "承認",
   perfDismiss: "却下",
   perfFootnote: "承認した変更は次のセルフレビュー時に適用されます。エージェントが自身のルールを変更することはありません。",
+
+  usageRangeToday: "今日",
+  usageRangeD3: "直近 3 日",
+  usageRangeD7: "直近 7 日",
+  usageRangeD30: "直近 30 日",
+  usageLoading: "使用統計を読み込み中…",
+  usageLoadError: "使用統計を読み込めませんでした。",
+  usageEmpty: "この期間の使用記録はありません。",
+  usageNotOpenclaw: "使用統計は OpenClaw プロバイダーでのみ利用可能です。",
+  usageMetricInput: "入力",
+  usageMetricOutput: "出力",
+  usageMetricCache: "キャッシュ",
+  usageMetricTotal: "合計",
+  usageMetricCalls: "呼び出し",
+  usageTotalsTitle: "合計",
+  usageChartTitle: (range) => `トークン使用量 · ${range}`,
+  usageSeriesInput: "入力トークン",
+  usageSeriesOutput: "出力トークン",
+  usageSeriesCache: "キャッシュトークン",
+  usageSeriesTotal: "合計トークン",
+  usageNoData: "この期間のデータはありません。",
 
   identityTitle: "アイデンティティ",
   identityDesc: "このエージェントが何者で、何で動いているか。",

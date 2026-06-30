@@ -434,3 +434,42 @@ curl 'http://10.21.27.155:18090/api/instances/17da714a-835a-481d-a7dc-2158c7f6d4
         }
     ]
 }
+
+token 消耗查询
+curl 'http://10.21.27.155:18090/api/admin/token-report/instances?period=day&days=30&instance_id=17da714a-835a-481d-a7dc-2158c7f6d4a7' \
+  -H 'Accept: application/json, text/plain, */*' \
+  -H 'Accept-Language: zh-CN,zh;q=0.9' \
+  -H 'Authorization: Bearer MToxNzgyODk0NTQx.8JH-VR05EM8Xn2-UPX174BmuWexMmN_OFaE9ghYzzVw' \
+  -H 'Connection: keep-alive' \
+  -H 'Referer: http://10.21.27.155:18090/model-config' \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36' \
+  --insecure
+
+响应
+{
+    "instances": [
+        {
+            "id": 120,
+            "name": "test-gateway"
+        }
+    ],
+    "report": [
+        {
+            "date": "2026-06-30",
+            "instance_id": 120,
+            "instance_name": "test-gateway",
+            "input_tokens": 16062,
+            "output_tokens": 8,
+            "cache_tokens": 256,
+            "total_tokens": 16070,
+            "calls": 1
+        }
+    ],
+    "totals": {
+        "input_tokens": 16062,
+        "output_tokens": 8,
+        "cache_tokens": 256,
+        "total_tokens": 16070,
+        "calls": 1
+    }
+}

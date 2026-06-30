@@ -579,3 +579,105 @@ export async function getInstance(instanceUuid: string): Promise<PreprocessedIns
   const raw = await request<Record<string, unknown>>(url, { method: "GET" });
   return preprocessInstance(raw);
 }
+
+// ============ Token 消耗报告 ============
+
+/**
+ * 单日单实例的 token 消耗记录
+ */
+export interface TokenReportEntry {
+  date: string;
+  instanceId: number;
+  instanceName: string;
+  inputTokens: number;
+  outputTokens: number;
+  cacheTokens: number;
+  totalTokens: number;
+  calls: number;
+}
+
+/**
+ * 实例摘要（仅包含 id 和 name）
+ */
+export interface TokenReportInstance {
+  id: number;
+  name: string;
+}
+
+/**
+ * token 报告汇总
+ */
+export interface TokenReportTotals {
+  inputTokens: number;
+  outputTokens: number;
+  cacheTokens: number;
+  totalTokens: number;
+  calls: number;
+}
+
+/**
+ * 预处理后的 token 报告
+ */
+export interface PreprocessedTokenReport {
+  instances: TokenReportInstance[];
+  report: TokenReportEntry[];
+  totals: TokenReportTotals;
+}
+
+/**
+ * 预处理 token 报告返回数据，统一字段命名
+ */
+function preprocessTokenReport(raw: Record<string, unknown>): PreprocessedTokenReport {
+  return {
+    instances: ((raw.instances as Record<string, unknown>[]) ?? []).map((i) => ({
+      id: i.id as number,
+      name: i.name as string,
+    })),
+    report: ((raw.report as Record<string, unknown>[]) ?? []).map((e) => ({
+      date: e.date as string,
+      instanceId: e.instance_id as number,
+      instanceName: e.instance_name as string,
+      inputTokens: (e.input_tokens as number) ?? 0,
+      outputTokens: (e.output_tokens as number) ?? 0,
+      cacheTokens: (e.cache_tokens as number) ?? 0,
+      totalTokens: (e.total_tokens as number) ?? 0,
+      calls: (e.calls as number) ?? 0,
+    })),
+    totals: (() => {
+      const t = raw.totals as Record<string, unknown>;
+      return {
+        inputTokens: (t.input_tokens as number) ?? 0,
+        outputTokens: (t.output_tokens as number) ?? 0,
+        cacheTokens: (t.cache_tokens as number) ?? 0,
+        totalTokens: (t.total_tokens as number) ?? 0,
+        calls: (t.calls as number) ?? 0,
+      };
+    })(),
+  };
+}
+
+export interface GetTokenReportParams {
+  instanceId: string;
+  /** 统计粒度，按天 / 按小时 */
+  period?: "day" | "hour";
+  /** 统计天数 */
+  days: number;
+}
+
+/**
+ * 查询 token 消耗报告
+ * GET /api/admin/token-report/instances?period=&days=&instance_id=
+ */
+export async function getTokenReport(
+  params: GetTokenReportParams
+): Promise<PreprocessedTokenReport> {
+  const period = params.period ?? "day";
+  const url =
+    `${BASE_URL}/api/admin/token-report/instances` +
+    `?period=${encodeURIComponent(period)}` +
+    `&by=uuid` +
+    `&days=${encodeURIComponent(String(params.days))}` +
+    `&instance_uuid=${encodeURIComponent(params.instanceId)}`;
+  const raw = await request<Record<string, unknown>>(url, { method: "GET" });
+  return preprocessTokenReport(raw);
+}

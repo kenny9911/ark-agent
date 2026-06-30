@@ -109,6 +109,10 @@ export const api = {
       "GET",
       `/api/agents/${agentId}/instance-info`
     ),
+
+  // ---- agent usage / token report ----
+  getAgentTokenReport: (agentId: string, days: 1 | 3 | 7 | 30) =>
+    req<TokenReportDTO>("GET", `/api/agents/${agentId}/token-report?days=${days}`),
 };
 
 // ---- response shapes ----
@@ -135,6 +139,28 @@ export interface AgentManagerProviderInfo {
   config: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Token consumption report (per-day) for an agent's OpenClaw instance. */
+export interface TokenReportDTO {
+  instances: { id: number; name: string }[];
+  report: {
+    date: string;
+    instanceId: number;
+    instanceName: string;
+    inputTokens: number;
+    outputTokens: number;
+    cacheTokens: number;
+    totalTokens: number;
+    calls: number;
+  }[];
+  totals: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheTokens: number;
+    totalTokens: number;
+    calls: number;
+  };
 }
 export interface TaskDTO { id: string; text: string; status: string; meta: string | null; sortOrder: number; }
 export interface ActivityDTO { id: string; text: string; tag: string; occurredAt: string; }

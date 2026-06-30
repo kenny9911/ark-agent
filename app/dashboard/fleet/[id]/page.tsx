@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { c, font, r } from "@/lib/theme";
 import { Btn } from "@/components/ui";
 import { api, ApiError } from "@/lib/client-api";
-import type { AgentDetailDTO, AgentManagerProviderInfo, MessageDTO } from "@/lib/client-api";
+import type { AgentDetailDTO, AgentManagerProviderInfo, MessageDTO, TokenReportDTO } from "@/lib/client-api";
 import {
   statusDisplay,
   ENGINE_LABEL,
@@ -33,7 +33,7 @@ import {
 import { useApp } from "@/lib/store";
 import { fleetDetail } from "@/lib/i18n/fleet-detail";
 
-const TAB_IDS = ["activity", "tasks", "chat", "performance", "settings"] as const;
+const TAB_IDS = ["activity", "tasks", "chat", "performance", "usage", "settings"] as const;
 
 const CHANNEL_OPTIONS = ["telegram", "whatsapp", "wechat", "line", "slack", "email", "web"];
 
@@ -584,6 +584,553 @@ function PerformanceTab({ cur, onRefresh }: { cur: AgentDetailDTO; onRefresh: ()
           {t.perfFootnote}
         </div>
       </div>
+    </div>
+  );
+}
+
+type UsageRangeKey = 1 | 3 | 7 | 30;
+
+const USAGE_RANGES: { key: UsageRangeKey; i18n: "usageRangeToday" | "usageRangeD3" | "usageRangeD7" | "usageRangeD30" }[] = [
+  { key: 1, i18n: "usageRangeToday" },
+  { key: 3, i18n: "usageRangeD3" },
+  { key: 7, i18n: "usageRangeD7" },
+  { key: 30, i18n: "usageRangeD30" },
+];
+
+const fmtInt = (n: number) => n.toLocaleString("en-US");
+
+/**
+ * Format a number with thousands separators. If `+` is true (default), prepend
+ * an explicit sign on positive numbers so the chart's per-bar labels read
+ * naturally: e.g. "+1,234" / "−512".
+ */
+function fmtTokens(n: number, withSign = false): string {
+  const abs = Math.abs(n).toLocaleString("en-US");
+  if (!withSign || n === 0) return abs;
+  return n > 0 ? `+${abs}` : `−${abs}`;
+}
+
+/**
+ * Compact token formatter for chart axis labels / hover: collapses to k / M.
+ */
+function fmtCompact(n: number): string {
+  const abs = Math.abs(n);
+  if (abs >= 1_000_000) return `${(n / 1_000_000).toFixed(abs >= 10_000_000 ? 0 : 1)}M`;
+  if (abs >= 1_000) return `${(n / 1_000).toFixed(abs >= 10_000 ? 0 : 1)}k`;
+  return String(n);
+}
+
+/**
+ * Format an ISO-ish date (yyyy-mm-dd) into a compact "MM/DD" string.
+ */
+function shortDate(date: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(date);
+  if (!m) return date;
+  return `${m[2]}/${m[3]}`;
+}
+
+function UsageTab({ cur }: { cur: AgentDetailDTO }) {
+  const { lang } = useApp();
+  const t = fleetDetail[lang];
+  const [range, setRange] = useState<UsageRangeKey>(7);
+  const [report, setReport] = useState<TokenReportDTO | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const isOpenclaw = cur.engine === "openclaw";
+  const notOpenclaw = !isOpenclaw;
+
+  useEffect(() => {
+    if (!isOpenclaw) {
+      return;
+    }
+    let alive = true;
+    (async () => {
+      try {
+        if (alive) {
+          setLoading(true);
+          setError(null);
+        }
+        const data = await api.getAgentTokenReport(cur.id, range);
+        if (!alive) return;
+        setReport(data);
+      } catch (e) {
+        if (!alive) return;
+        setError(e instanceof ApiError ? e.message : t.usageLoadError);
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [cur.id, range, isOpenclaw, t.usageLoadError]);
+
+  // For non-OpenClaw engines we never load anything; reflect that without
+  // touching state inside the effect above.
+  const renderLoading = loading && !notOpenclaw;
+
+  const rangeLabel =
+    range === 1
+      ? t.usageRangeToday
+      : range === 3
+        ? t.usageRangeD3
+        : range === 7
+          ? t.usageRangeD7
+          : t.usageRangeD30;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      {/* Range tabs */}
+      <div style={{ display: "flex", gap: 2, border: `1px solid ${c.border}`, padding: 3, width: "fit-content", borderRadius: r.radiusSm }}>
+        {USAGE_RANGES.map((r2) => {
+          const on = range === r2.key;
+          return (
+            <button
+              key={r2.key}
+              type="button"
+              onClick={() => setRange(r2.key)}
+              style={{
+                background: on ? c.lime : "transparent",
+                color: on ? c.ink : c.muted,
+                border: "none",
+                padding: "7px 14px",
+                fontFamily: font.mono,
+                fontSize: 11,
+                letterSpacing: ".04em",
+                cursor: "pointer",
+                borderRadius: r.radiusSm,
+              }}
+            >
+              {t[r2.i18n]}
+            </button>
+          );
+        })}
+      </div>
+
+      {notOpenclaw && (
+        <div
+          style={{
+            border: `1px solid ${c.border}`,
+            background: c.panel,
+            padding: "40px 22px",
+            textAlign: "center",
+            fontSize: 13.5,
+            color: c.faint,
+            borderRadius: r.radiusMd,
+          }}
+        >
+          {t.usageNotOpenclaw}
+        </div>
+      )}
+
+      {!notOpenclaw && error && (
+        <div
+          style={{
+            border: `1px solid ${c.redBorder}`,
+            background: c.redWash,
+            color: c.red,
+            padding: "12px 16px",
+            fontFamily: font.mono,
+            fontSize: 12.5,
+            borderRadius: r.radiusMd,
+          }}
+        >
+          {error}
+        </div>
+      )}
+
+      {!notOpenclaw && renderLoading && (
+        <div
+          style={{
+            border: `1px solid ${c.border}`,
+            background: c.panel,
+            padding: 40,
+            fontFamily: font.mono,
+            fontSize: 12,
+            letterSpacing: ".08em",
+            color: c.faint,
+            textAlign: "center",
+            borderRadius: r.radiusMd,
+          }}
+        >
+          {t.usageLoading}
+        </div>
+      )}
+
+      {!notOpenclaw && !renderLoading && !error && report && (
+        <>
+          {/* Totals strip */}
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: "repeat(5, 1fr)",
+              gap: 0,
+              border: `1px solid ${c.border}`,
+              background: c.panel,
+              borderRadius: r.radiusMd,
+              overflow: "hidden",
+            }}
+          >
+            {(
+              [
+                { k: "inputTokens", label: t.usageMetricInput, color: c.accent },
+                { k: "outputTokens", label: t.usageMetricOutput, color: c.blue },
+                { k: "cacheTokens", label: t.usageMetricCache, color: c.muted },
+                { k: "totalTokens", label: t.usageMetricTotal, color: c.text },
+                { k: "calls", label: t.usageMetricCalls, color: c.green },
+              ] as { k: keyof TokenReportDTO["totals"]; label: string; color: string }[]
+            ).map((m, i) => (
+              <div
+                key={m.k}
+                style={{
+                  padding: "18px 18px",
+                  borderLeft: i === 0 ? "none" : `1px solid ${c.line}`,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 6,
+                }}
+              >
+                <div
+                  style={{
+                    fontFamily: font.mono,
+                    fontSize: 10.5,
+                    letterSpacing: ".1em",
+                    color: c.faint,
+                    textTransform: "uppercase",
+                  }}
+                >
+                  {m.label}
+                </div>
+                <div
+                  style={{
+                    fontFamily: font.space,
+                    fontWeight: 700,
+                    fontSize: 20,
+                    color: m.color,
+                  }}
+                >
+                  {fmtInt(report.totals[m.k] ?? 0)}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Bar chart card */}
+          <div
+            style={{
+              border: `1px solid ${c.border}`,
+              background: c.panel,
+              padding: 22,
+              borderRadius: r.radiusMd,
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                flexWrap: "wrap",
+                gap: 12,
+                marginBottom: 16,
+              }}
+            >
+              <div
+                style={{
+                  fontFamily: font.mono,
+                  fontSize: 11,
+                  letterSpacing: ".1em",
+                  color: c.muted,
+                  textTransform: "uppercase",
+                }}
+              >
+                {t.usageChartTitle(rangeLabel)}
+              </div>
+            </div>
+
+            {report.report.length === 0 ? (
+              <div
+                style={{
+                  padding: "32px 16px",
+                  fontFamily: font.mono,
+                  fontSize: 12,
+                  color: c.faint,
+                  textAlign: "center",
+                }}
+              >
+                {t.usageNoData}
+              </div>
+            ) : (() => {
+                // Stacked bar chart: each day is a stack of
+                //   [input (lime), output (blue), cache (muted)]
+                // Y-axis max is the largest daily *sum* — independent of the
+                // top series switcher, which only affects the legend/totals.
+                const stackMax = report.report.reduce(
+                  (acc, e) =>
+                    Math.max(acc, e.inputTokens + e.outputTokens + e.cacheTokens),
+                  0,
+                );
+                // Nice tick grid (5 horizontal lines, 0 → max).
+                const tickValues = (() => {
+                  if (stackMax <= 0) return [0];
+                  const stepCandidates = [1, 2, 5];
+                  const niceStep = (() => {
+                    const raw = stackMax / 4;
+                    const pow = Math.pow(10, Math.floor(Math.log10(raw)));
+                    for (const s of stepCandidates) {
+                      const v = s * pow;
+                      if (v >= raw) return v;
+                    }
+                    return 10 * pow;
+                  })();
+                  const ticks: number[] = [0];
+                  for (let v = niceStep; v < stackMax; v += niceStep) ticks.push(v);
+                  if (ticks[ticks.length - 1] !== stackMax) ticks.push(stackMax);
+                  return ticks.slice(-5);
+                })();
+                const chartHeight = 200;
+                const innerH = chartHeight - 12; // reserve top space for hover labels
+                // Per-segment colour tied to the project's semantic palette.
+                const segColors = {
+                  input: c.lime,
+                  output: c.blue,
+                  cache: c.muted,
+                };
+                return (
+                  <>
+                    <div
+                      style={{
+                        position: "relative",
+                        height: chartHeight,
+                        marginBottom: 8,
+                      }}
+                    >
+                      {/* Gridlines + left-axis tick labels */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          display: "flex",
+                          flexDirection: "column",
+                          justifyContent: "space-between",
+                          pointerEvents: "none",
+                        }}
+                      >
+                        {tickValues
+                          .slice()
+                          .reverse()
+                          .map((v) => (
+                            <div
+                              key={`g-${v}`}
+                              style={{
+                                position: "relative",
+                                flex: 1,
+                                borderTop: `1px dashed ${c.lineSoft}`,
+                              }}
+                            >
+                              <span
+                                style={{
+                                  position: "absolute",
+                                  top: -7,
+                                  left: 0,
+                                  fontFamily: font.mono,
+                                  fontSize: 10,
+                                  color: c.faint,
+                                  background: c.panel,
+                                  paddingRight: 6,
+                                }}
+                              >
+                                {fmtCompact(v)}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+
+                      {/* Stacked bars row */}
+                      <div
+                        style={{
+                          position: "absolute",
+                          inset: "12px 0 0 42px",
+                          display: "flex",
+                          alignItems: "flex-end",
+                          justifyContent: "space-between",
+                          gap: 6,
+                        }}
+                      >
+                        {report.report.map((e, i) => {
+                          const sum = e.inputTokens + e.outputTokens + e.cacheTokens;
+                          const inH =
+                            stackMax > 0
+                              ? Math.max(0, (e.inputTokens / stackMax) * innerH)
+                              : 0;
+                          const outH =
+                            stackMax > 0
+                              ? Math.max(0, (e.outputTokens / stackMax) * innerH)
+                              : 0;
+                          const cacheH =
+                            stackMax > 0
+                              ? Math.max(0, (e.cacheTokens / stackMax) * innerH)
+                              : 0;
+                          const totalH = inH + outH + cacheH;
+                          const isLast = i === report.report.length - 1;
+                          const roundedTop =
+                            totalH > 0 && totalH < 4 ? 0 : 2;
+                          return (
+                            <div
+                              key={`${e.date}-${i}`}
+                              title={
+                                `${e.date}\n` +
+                                `  ${t.usageSeriesInput}: ${fmtTokens(e.inputTokens)}\n` +
+                                `  ${t.usageSeriesOutput}: ${fmtTokens(e.outputTokens)}\n` +
+                                `  ${t.usageSeriesCache}: ${fmtTokens(e.cacheTokens)}\n` +
+                                `  ${t.usageMetricTotal}: ${fmtTokens(sum)}`
+                              }
+                              style={{
+                                flex: "0 1 auto",
+                                width: "100%",
+                                maxWidth: 56,
+                                height: "100%",
+                                display: "flex",
+                                flexDirection: "column",
+                                alignItems: "center",
+                                justifyContent: "flex-end",
+                                position: "relative",
+                                cursor: "default",
+                              }}
+                            >
+                              {/* Bars: cache on top, output middle, input bottom */}
+                              {cacheH > 0 && (
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: cacheH,
+                                    background: segColors.cache,
+                                    borderTop:
+                                      outH + cacheH > 0
+                                        ? `1px solid ${c.border}`
+                                        : "none",
+                                    transition: "height .25s ease",
+                                  }}
+                                />
+                              )}
+                              {outH > 0 && (
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: outH,
+                                    background: segColors.output,
+                                    transition: "height .25s ease",
+                                  }}
+                                />
+                              )}
+                              {inH > 0 && (
+                                <div
+                                  style={{
+                                    width: "100%",
+                                    height: inH,
+                                    background: segColors.input,
+                                    borderTop:
+                                      inH + outH + cacheH > 0
+                                        ? `2px solid ${c.accent}`
+                                        : "none",
+                                    borderTopLeftRadius: roundedTop,
+                                    borderTopRightRadius: roundedTop,
+                                    transition: "height .25s ease",
+                                  }}
+                                />
+                              )}
+                              <span
+                                style={{
+                                  marginTop: 6,
+                                  fontFamily: font.mono,
+                                  fontSize: 10,
+                                  color: isLast ? c.text2 : c.faint,
+                                  transform: "rotate(-30deg)",
+                                  transformOrigin: "left top",
+                                  whiteSpace: "nowrap",
+                                }}
+                              >
+                                {shortDate(e.date)}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Stacked legend with totals — replaces the old broken footer
+                        that referenced `report.totals.totalTokens` regardless of
+                        the active series and produced "NaN". */}
+                    <div
+                      style={{
+                        display: "flex",
+                        flexWrap: "wrap",
+                        gap: 18,
+                        borderTop: `1px solid ${c.line}`,
+                        paddingTop: 12,
+                        marginTop: 4,
+                        fontFamily: font.mono,
+                        fontSize: 11,
+                        color: c.muted,
+                      }}
+                    >
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span
+                          style={{
+                            width: 10,
+                            height: 10,
+                            background: segColors.input,
+                            border: `1px solid ${c.accent}`,
+                          }}
+                        />
+                        {t.usageSeriesInput}
+                        <strong style={{ color: c.text, fontWeight: 600 }}>
+                          {fmtTokens(report.totals.inputTokens)}
+                        </strong>
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span
+                          style={{
+                            width: 10,
+                            height: 10,
+                            background: segColors.output,
+                            border: `1px solid ${c.borderStrong}`,
+                          }}
+                        />
+                        {t.usageSeriesOutput}
+                        <strong style={{ color: c.text, fontWeight: 600 }}>
+                          {fmtTokens(report.totals.outputTokens)}
+                        </strong>
+                      </span>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        <span
+                          style={{
+                            width: 10,
+                            height: 10,
+                            background: segColors.cache,
+                            border: `1px solid ${c.borderStrong}`,
+                          }}
+                        />
+                        {t.usageSeriesCache}
+                        <strong style={{ color: c.text, fontWeight: 600 }}>
+                          {fmtTokens(report.totals.cacheTokens)}
+                        </strong>
+                      </span>
+                      <span style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                        {t.usageMetricCalls}:{" "}
+                        <strong style={{ color: c.text, fontWeight: 600 }}>
+                          {fmtInt(report.totals.calls)}
+                        </strong>
+                      </span>
+                    </div>
+                  </>
+                );
+              })()}
+          </div>
+
+          {/* /Per-day table removed */}
+        </>
+      )}
     </div>
   );
 }
@@ -2142,7 +2689,9 @@ function AgentDetailInner() {
                   ? t.tabChat
                   : id === "performance"
                     ? t.tabPerformance
-                    : t.tabSettings;
+                    : id === "usage"
+                      ? t.tabUsage
+                      : t.tabSettings;
           return (
             <button
               key={id}
@@ -2171,6 +2720,7 @@ function AgentDetailInner() {
       {tab === "tasks" && <TasksTab cur={cur} />}
       {tab === "chat" && <ChatTab key={cur.id} cur={cur} />}
       {tab === "performance" && <PerformanceTab key={cur.id} cur={cur} onRefresh={load} />}
+      {tab === "usage" && <UsageTab key={cur.id} cur={cur} />}
       {tab === "settings" && <SettingsTab key={cur.id} cur={cur} onRefresh={load} />}
     </div>
   );
