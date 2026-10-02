@@ -13,14 +13,15 @@ import {
 } from "@/lib/services/openclaw_instances";
 import { mergeSettings } from "@/lib/agent-settings";
 import {
-  isLLMConfigured,
   streamChatCompletion,
   type ChatMessage,
   type LlmUsageSample,
 } from "@/lib/llm/openrouter";
 import { buildAgentSystemPrompt } from "@/lib/llm/agent-prompt";
+import { resolveLlmProvider } from "@/lib/services/llm-channels";
 import { recordLlmUsage, classifyLlmError, type LlmErrorCode } from "@/lib/llm/usage";
 import type { Agent, Message } from "@/lib/db/schema";
+import { withOpenClawManagerUser } from "@/lib/openclaw-manager-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -94,7 +95,13 @@ export async function POST(req: Request, { params }: Ctx) {
   const useStream = agentManagerMode() === "live" && !!openclawConfig?.externalId;
   // When no live OpenClaw runtime is attached, prefer a real LLM (OpenRouter)
   // over the canned reply — as long as an API key is configured.
-  const useLLM = !useStream && isLLMConfigured();
+  const settings = mergeSettings(agent.settings);
+  const provider = !useStream
+    ? await withOpenClawManagerUser(auth.ctx.user, () =>
+        resolveLlmProvider(auth.ctx.workspace.id, settings.primaryModel),
+      )
+    : null;
+  const useLLM = !useStream && !!provider;
 
   // Neither a runtime nor a model: the only thing left is the canned reply, and
   // pantomiming a model to a paying customer is worse than saying nothing. Fail
@@ -117,7 +124,7 @@ export async function POST(req: Request, { params }: Ctx) {
       try {
         send({ type: "user_message", conversationId: conv!.id, message: serializeMessage(userMsg) });
         if (useStream) {
-          await streamOpenclawReply({
+          await withOpenClawManagerUser(auth.ctx.user, () => streamOpenclawReply({
             externalId: openclawConfig!.externalId,
             agentId: id,
             conversationId: conv!.id,
@@ -128,12 +135,13 @@ export async function POST(req: Request, { params }: Ctx) {
             onComplete: (replyMessage) =>
               send({ type: "done", conversationId: conv!.id, replyMessage: serializeMessage(replyMessage) }),
             onError: (message) => send({ type: "error", message }),
-          });
+          }));
         } else if (useLLM) {
           await streamLLMReply({
             agent,
             userId: auth.ctx.user.id,
             workspaceId: auth.ctx.workspace.id,
+            provider,
             conversationId: conv!.id,
             onDelta: (delta) => send({ type: "delta", delta }),
             onComplete: (replyMessage) =>
@@ -261,6 +269,7 @@ async function streamLLMReply(opts: {
   agent: Agent;
   userId: string;
   workspaceId: string;
+  provider: { apiKey: string; baseUrl: string; model: string } | null;
   conversationId: string;
   onDelta: (delta: string) => void;
   onComplete: (replyMessage: Message) => void;
@@ -307,6 +316,9 @@ async function streamLLMReply(opts: {
       messages: llmMessages,
       temperature: settings.temperature,
       maxTokens: settings.maxTokens,
+      model: opts.provider?.model,
+      apiKey: opts.provider?.apiKey,
+      baseUrl: opts.provider?.baseUrl,
       onDelta: opts.onDelta,
       onUsage: (u) => {
         sample = u;

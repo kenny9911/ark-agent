@@ -381,6 +381,35 @@ export const workspaceMembers = pgTable(
   ],
 );
 
+/**
+ * OpenAI-compatible LLM endpoints. A NULL workspace owns a platform-wide,
+ * read-only system channel; non-NULL rows belong to one workspace.
+ */
+export const llmChannels = pgTable(
+  "llm_channels",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: uuid("workspace_id")
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 100 }).notNull(),
+    provider: varchar("provider", { length: 40 }).notNull().default("custom"),
+    protocol: varchar("protocol", { length: 40 }).notNull().default("openai-compatible"),
+    baseUrl: varchar("base_url", { length: 500 }).notNull(),
+    // The deployed schema calls this encrypted. The application layer owns
+    // encryption/decryption; keep the DB column name aligned with production.
+    apiKeyEncrypted: text("api_key_encrypted").notNull(),
+    enabled: boolean("enabled").notNull().default(true),
+    models: jsonb("models").$type<string[]>().notNull().default([]),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    index("llm_channels_workspace_idx").on(t.workspaceId),
+    uniqueIndex("llm_channels_workspace_name_uniq").on(t.workspaceId, t.name),
+  ],
+);
+
 export const sessions = pgTable(
   "sessions",
   {
@@ -398,6 +427,44 @@ export const sessions = pgTable(
   (t) => [
     uniqueIndex("sessions_token_uniq").on(t.tokenHash),
     index("sessions_user_idx").on(t.userId),
+  ],
+);
+
+/**
+ * User-managed credentials for calling the HTTP API with
+ * `Authorization: Bearer ark_live_...`.
+ *
+ * Product requirements deliberately keep the complete key in plaintext so it
+ * can be shown and copied again from the management screen. Keep this table out
+ * of generic serializers and logs: the `key` column is an active credential.
+ */
+export const apiKeys = pgTable(
+  "api_keys",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => workspaces.id, { onDelete: "cascade" }),
+    name: varchar("name", { length: 100 }).notNull(),
+    // Plaintext by explicit product requirement; see the table comment above.
+    key: varchar("key", { length: 41 }).notNull(),
+    permissions: text("permissions").array().notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }),
+    lastUsedAt: timestamp("last_used_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+  },
+  (t) => [
+    uniqueIndex("api_keys_key_uniq").on(t.key),
+    index("api_keys_user_idx").on(t.userId),
+    index("api_keys_workspace_idx").on(t.workspaceId),
+    check("api_keys_format", sql`${t.key} ~ '^ark_live_[0-9a-f]{32}$'`),
+    check(
+      "api_keys_permissions",
+      sql`cardinality(${t.permissions}) > 0 AND ${t.permissions} <@ ARRAY['read','write']::text[]`,
+    ),
   ],
 );
 
@@ -2038,6 +2105,8 @@ export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Workspace = typeof workspaces.$inferSelect;
 export type Session = typeof sessions.$inferSelect;
+export type ApiKey = typeof apiKeys.$inferSelect;
+export type NewApiKey = typeof apiKeys.$inferInsert;
 export type AgentRole = typeof agentRoles.$inferSelect;
 export type Plan = typeof plans.$inferSelect;
 export type Agent = typeof agents.$inferSelect;
